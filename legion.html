@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3a0f12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>LEGIO — March of the Eagles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --legion:#7a1f24; --legion-dark:#591418; --blood:#a32a2f; --blood-bright:#c4373b;
+  --gold:#c9a24a; --gold-light:#e6cd8b; --gold-deep:#9a7424;
+  --marble:#f1e8d6; --marble-2:#e5d9bd; --marble-3:#d8c9a6;
+  --ink:#2c211a; --ink-soft:#6a584420;
+  --stone:#2a1d1c; --stone-2:#3a2826;
+  --bg-0:#1a0809; --bg-1:#2c0d0f; --bg-2:#3a1013;
+  --good:#4f7a3f; --good-bright:#6fa358; --bad:#a33028;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'EB Garamond',Georgia,serif;
+  color:var(--marble);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #4a1417 0%, transparent 55%),
+    radial-gradient(100% 70% at 50% 110%, #1f0a0b 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg-1),var(--bg-0));
+  background-attachment:fixed;
+  overflow:hidden;
+  -webkit-user-select:none;user-select:none;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;z-index:1;}
+
+/* ---------- Top bar ---------- */
+header{
+  flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;
+  background:linear-gradient(180deg,var(--legion-dark),var(--legion) 70%, #6a1a1e);
+  border-bottom:2px solid var(--gold-deep);
+  box-shadow:0 4px 18px #0008, inset 0 1px 0 #ffffff18;
+  position:relative;
+}
+.crest{display:flex;align-items:center;gap:10px;}
+.eagle{width:38px;height:38px;flex:0 0 auto;filter:drop-shadow(0 1px 1px #0008);}
+.title-wrap{flex:1;min-width:0;}
+.title-wrap h1{font-family:'Cinzel',serif;font-weight:900;font-size:20px;letter-spacing:3px;color:var(--gold-light);line-height:1;text-shadow:0 1px 2px #0009;}
+.title-wrap .rank{font-size:13px;color:#f1e8d6cc;letter-spacing:1px;font-style:italic;margin-top:2px;}
+.steps-pill{
+  position:absolute;top:calc(env(safe-area-inset-top) + 8px);right:14px;text-align:right;
+}
+.steps-pill .num{font-family:'Cinzel',serif;font-weight:700;font-size:22px;color:var(--gold-light);line-height:1;text-shadow:0 1px 2px #0009;}
+.steps-pill .lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#ffffffaa;}
+.subbar{display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#ffffffd0;align-items:center;flex-wrap:wrap;}
+.subbar b{color:var(--gold-light);font-family:'Cinzel';font-weight:700;}
+.rank-track{flex:1;min-width:120px;height:7px;border-radius:6px;background:#00000040;overflow:hidden;border:1px solid #ffffff18;}
+.rank-track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-light));border-radius:6px;transition:width .5s;}
+
+/* ---------- Scroll body ---------- */
+main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 96px;}
+.screen{display:none;animation:fade .35s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+h2.section{font-family:'Cinzel';font-weight:700;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:18px 2px 8px;display:flex;align-items:center;gap:8px;}
+h2.section:first-child{margin-top:2px;}
+h2.section::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gold-deep),transparent);}
+
+.card{
+  background:linear-gradient(180deg,var(--marble),var(--marble-2));
+  color:var(--ink);border-radius:14px;padding:14px;margin-bottom:12px;
+  border:1px solid #00000022;
+  box-shadow:0 6px 16px #0006, inset 0 1px 0 #ffffffaa, inset 0 0 0 1px #ffffff40;
+  position:relative;
+}
+.card.dark{background:linear-gradient(180deg,var(--stone-2),var(--stone));color:var(--marble);box-shadow:0 6px 16px #0007, inset 0 0 0 1px #ffffff12;}
+
+/* Camp dashboard hero */
+.hero{display:flex;gap:14px;align-items:stretch;}
+.hero .big{flex:1;text-align:center;}
+.hero .big .n{font-family:'Cinzel';font-weight:900;font-size:40px;color:var(--legion);line-height:1;}
+.hero .big .l{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);color:#7a6a55;margin-top:3px;}
+.hero .divider{width:1px;background:#0000001f;}
+
+.statline{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #00000018;font-size:15px;}
+.statline:last-child{border-bottom:none;}
+.statline .v{font-family:'Cinzel';font-weight:700;}
+
+/* Sensor box */
+.sensor{display:flex;align-items:center;gap:12px;}
+.sensor .dot{width:12px;height:12px;border-radius:50%;background:#b54;flex:0 0 auto;box-shadow:0 0 0 4px #b5440f;}
+.sensor.on .dot{background:var(--good-bright);box-shadow:0 0 0 4px #6fa3580f;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px #6fa35822;}50%{box-shadow:0 0 0 8px #6fa35800;}}
+.sensor .txt{flex:1;font-size:13.5px;line-height:1.25;}
+.sensor .txt b{display:block;font-family:'Cinzel';font-size:14px;}
+
+/* Unit rows */
+.unit{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #00000014;}
+.unit:last-child{border-bottom:none;}
+.glyph{width:46px;height:46px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff4,transparent 60%),linear-gradient(160deg,var(--blood),var(--legion-dark));
+  box-shadow:inset 0 0 0 1px #ffffff22, 0 2px 5px #0004;}
+.glyph svg{width:30px;height:30px;}
+.unit .info{flex:1;min-width:0;}
+.unit .info .nm{font-family:'Cinzel';font-weight:700;font-size:15px;color:var(--legion-dark);}
+.unit .info .role{font-size:12px;color:#897460;font-style:italic;}
+.unit .info .mini{font-size:11.5px;color:#6a584e;margin-top:3px;display:flex;gap:9px;flex-wrap:wrap;}
+.unit .info .mini span{white-space:nowrap;}
+.unit .info .mini b{font-weight:600;color:var(--legion);}
+.unit .right{text-align:right;flex:0 0 auto;}
+.unit .count{font-family:'Cinzel';font-weight:900;font-size:22px;color:var(--ink);line-height:1;}
+.unit .count.zero{color:#b3a48d;}
+
+/* Buttons */
+.btn{
+  font-family:'Cinzel';font-weight:700;letter-spacing:.5px;border:none;cursor:pointer;
+  border-radius:10px;padding:11px 14px;font-size:14px;color:#fff;
+  background:linear-gradient(180deg,var(--blood-bright),var(--legion));
+  box-shadow:0 3px 0 var(--legion-dark),0 5px 10px #0005, inset 0 1px 0 #ffffff40;
+  transition:transform .08s, box-shadow .08s;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--legion-dark),0 2px 6px #0005, inset 0 1px 0 #ffffff40;}
+.btn.gold{background:linear-gradient(180deg,var(--gold-light),var(--gold));color:#4a3410;box-shadow:0 3px 0 var(--gold-deep),0 5px 10px #0005, inset 0 1px 0 #fff8;text-shadow:0 1px 0 #fff6;}
+.btn.gold:active{box-shadow:0 1px 0 var(--gold-deep),0 2px 6px #0005;}
+.btn.ghost{background:transparent;color:var(--legion);box-shadow:inset 0 0 0 2px var(--legion);text-shadow:none;}
+.btn.block{width:100%;display:block;}
+.btn.lg{padding:15px;font-size:16px;letter-spacing:1px;}
+.btn:disabled{filter:grayscale(.7);opacity:.5;box-shadow:0 2px 0 #777;cursor:not-allowed;}
+.btn:disabled:active{transform:none;}
+.btn-row{display:flex;gap:7px;}
+.btn-sm{font-family:'Cinzel';font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:9px;border:none;color:#fff;
+  background:linear-gradient(180deg,var(--blood-bright),var(--legion));box-shadow:0 2px 0 var(--legion-dark),inset 0 1px 0 #ffffff30;cursor:pointer;flex:1;}
+.btn-sm:active{transform:translateY(1px);}
+.btn-sm.alt{background:linear-gradient(180deg,#8a7a5e,#5f5036);box-shadow:0 2px 0 #3d3322,inset 0 1px 0 #ffffff20;}
+.btn-sm:disabled{filter:grayscale(.7);opacity:.5;}
+
+.cost{font-family:'Cinzel';font-weight:700;font-size:13px;color:var(--gold-deep);display:inline-flex;align-items:center;gap:4px;}
+.cost svg{width:13px;height:13px;}
+.afford-no{color:#b54;}
+
+.note{font-size:12.5px;line-height:1.4;color:#7a6a55;font-style:italic;}
+.dark .note{color:#d8c8a8;}
+
+/* Province / march */
+.prov-hd{display:flex;justify-content:space-between;align-items:flex-start;}
+.prov-hd .pname{font-family:'Cinzel';font-weight:900;font-size:20px;color:var(--gold-light);letter-spacing:1px;}
+.prov-hd .pno{font-size:12px;color:#d8c8a8;letter-spacing:1px;text-transform:uppercase;}
+.banner-tag{font-size:11px;font-family:'Cinzel';font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:1px;}
+.tag-frontier{background:var(--gold);color:#3a2807;}
+.tag-done{background:#2e5a2433;color:var(--good-bright);box-shadow:inset 0 0 0 1px var(--good-bright);}
+.vs{display:flex;align-items:center;gap:10px;margin:14px 0 10px;}
+.vs .side{flex:1;text-align:center;}
+.vs .side .lab{font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.8;}
+.vs .side .pw{font-family:'Cinzel';font-weight:900;font-size:26px;}
+.vs .side.me .pw{color:var(--gold-light);}
+.vs .side.foe .pw{color:#e89a86;}
+.vs .swords{font-size:20px;opacity:.7;}
+.odds{height:9px;border-radius:6px;overflow:hidden;background:#00000040;display:flex;border:1px solid #ffffff18;margin-bottom:4px;}
+.odds i{display:block;height:100%;}
+.odds .me{background:linear-gradient(90deg,var(--gold-deep),var(--gold-light));}
+.odds .foe{background:linear-gradient(90deg,#7a322a,#c4554a);}
+.odds-txt{text-align:center;font-size:12px;color:#e8dcc0;margin-bottom:12px;font-style:italic;}
+
+.conq-list{display:flex;flex-wrap:wrap;gap:6px;}
+.conq-chip{font-size:12px;font-family:'Cinzel';padding:5px 9px;border-radius:8px;background:#2e5a2422;color:#cfe3c0;box-shadow:inset 0 0 0 1px #6fa35840;}
+
+/* ---------- Bottom nav ---------- */
+nav{
+  flex:0 0 auto;display:flex;background:linear-gradient(180deg,#311011,#220a0b);
+  border-top:2px solid var(--gold-deep);padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -4px 18px #0008;
+}
+nav button{flex:1;background:none;border:none;color:#caa9a0;padding:9px 2px 8px;cursor:pointer;font-family:'Cinzel';font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;letter-spacing:1px;transition:color .2s;}
+nav button svg{width:23px;height:23px;}
+nav button.active{color:var(--gold-light);}
+nav button.active svg{filter:drop-shadow(0 0 6px var(--gold));}
+nav .badge{position:absolute;top:4px;right:calc(50% - 22px);background:var(--blood-bright);color:#fff;font-size:9px;font-family:'Cinzel';min-width:15px;height:15px;border-radius:9px;display:grid;place-items:center;box-shadow:0 0 0 2px #220a0b;padding:0 3px;}
+nav button{position:relative;}
+
+/* ---------- Modal ---------- */
+.modal-bg{position:fixed;inset:0;background:#000a;backdrop-filter:blur(3px);z-index:50;display:none;align-items:center;justify-content:center;padding:18px;}
+.modal-bg.show{display:flex;animation:fade .25s;}
+.modal{background:linear-gradient(180deg,var(--marble),var(--marble-2));color:var(--ink);border-radius:16px;width:100%;max-width:380px;overflow:hidden;border:2px solid var(--gold-deep);box-shadow:0 20px 50px #000b;}
+.modal .head{padding:14px;text-align:center;background:linear-gradient(180deg,var(--legion),var(--legion-dark));color:var(--gold-light);}
+.modal .head h3{font-family:'Cinzel';font-weight:900;font-size:22px;letter-spacing:2px;}
+.modal .head .sub{font-size:13px;color:#f0e6d2cc;font-style:italic;margin-top:2px;}
+.modal .body{padding:16px;}
+#battleCanvas{width:100%;display:block;border-radius:10px;background:linear-gradient(180deg,#cdb98e,#a8915f 60%,#7d6b43);box-shadow:inset 0 0 26px #00000055;}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--stone-2);color:var(--gold-light);font-family:'Cinzel';font-weight:700;padding:11px 18px;border-radius:30px;border:1px solid var(--gold-deep);box-shadow:0 8px 22px #0008;z-index:60;opacity:0;pointer-events:none;transition:.3s;font-size:13.5px;letter-spacing:.5px;text-align:center;max-width:90%;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.spoils{display:flex;justify-content:center;gap:18px;margin:6px 0 14px;}
+.spoils .s{text-align:center;}
+.spoils .s .n{font-family:'Cinzel';font-weight:900;font-size:26px;}
+.spoils .s .l{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8a7763;}
+.win .n{color:var(--good);}
+.lose .n{color:var(--bad);}
+
+.inrow{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.inrow input{flex:1;font-family:'Cinzel';font-size:16px;padding:10px;border-radius:9px;border:2px solid #00000020;background:#fff8;color:var(--ink);}
+.toggle{display:flex;gap:6px;background:#00000018;padding:4px;border-radius:10px;margin-top:6px;}
+.toggle button{flex:1;border:none;background:none;font-family:'Cinzel';font-weight:700;font-size:12px;padding:7px;border-radius:7px;color:#7a6a55;cursor:pointer;}
+.toggle button.on{background:var(--legion);color:#fff;}
+small.fine{display:block;color:#8a7763;font-size:11px;margin-top:6px;line-height:1.4;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="crest">
+      <svg class="eagle" viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="#e6cd8b" stroke="#9a7424" stroke-width="1.2">
+          <path d="M32 8c2 0 3 2 3 4l-1 6 4-3c3-2 6 0 5 3-1 2-4 3-7 4 4 0 9 1 12 4 2 2 0 5-3 4-4-1-7-3-11-3 3 2 6 5 7 9 1 3-2 5-4 3-3-3-5-7-8-9-3 2-5 6-8 9-2 2-5 0-4-3 1-4 4-7 7-9-4 0-7 2-11 3-3 1-5-2-3-4 3-3 8-4 12-4-3-1-6-2-7-4-1-3 2-5 5-3l4 3-1-6c0-2 1-4 3-4z"/>
+          <path d="M32 28c1 0 2 1 2 3v18c0 3-4 3-4 0V31c0-2 1-3 2-3z"/>
+        </g>
+        <path d="M24 52h16l-3 5H27z" fill="#9a7424"/>
+      </svg>
+      <div class="title-wrap">
+        <h1>LEGIO</h1>
+        <div class="rank" id="rankName">Tiro of the Walking Legion</div>
+      </div>
+      <div class="steps-pill">
+        <div class="num" id="bankBig">0</div>
+        <div class="lbl">Steps Banked</div>
+      </div>
+    </div>
+    <div class="subbar">
+      <span>Today <b id="todaySteps">0</b></span>
+      <span>Might <b id="mightVal">0</b></span>
+      <div class="rank-track"><i id="rankBar" style="width:0%"></i></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== CAMP ===== -->
+    <section class="screen active" id="scr-camp">
+      <h2 class="section">The Castra</h2>
+      <div class="card">
+        <div class="hero">
+          <div class="big"><div class="n" id="campTroops">0</div><div class="l">Soldiers</div></div>
+          <div class="divider"></div>
+          <div class="big"><div class="n" id="campMight">0</div><div class="l">Army Might</div></div>
+          <div class="divider"></div>
+          <div class="big"><div class="n" id="campProv">0</div><div class="l">Provinces</div></div>
+        </div>
+      </div>
+
+      <div class="card dark" id="sensorCard">
+        <div class="sensor" id="sensorRow">
+          <div class="dot"></div>
+          <div class="txt"><b id="sensorTitle">Pedometer asleep</b><span id="sensorSub">Tap to let the legion count your every step.</span></div>
+        </div>
+        <button class="btn gold block" id="trackBtn" style="margin-top:12px;">Begin the March</button>
+        <small class="fine">Your phone's motion sensor counts real steps as you walk. Keep this page open while you move. iPhone will ask permission once.</small>
+      </div>
+
+      <div class="card" id="patrolCard">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="flex:1;">
+            <div style="font-family:'Cinzel';font-weight:700;color:var(--legion-dark);font-size:15px;">Patrols on the March</div>
+            <div class="role" style="font-size:12.5px;color:#897460;font-style:italic;">Scouts auto-skirmish with bandits as you walk</div>
+          </div>
+          <div class="toggle" style="margin:0;width:108px;flex:0 0 auto;">
+            <button id="autoOn" class="on">On</button><button id="autoOff">Off</button>
+          </div>
+        </div>
+        <div id="streakStrip" style="margin-top:11px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#fbe7c0,#f4dba0);border-radius:10px;padding:9px 11px;border:1px solid #c9a24a66;box-shadow:inset 0 1px 0 #fff8;">
+          <span style="font-size:20px;" id="streakIcon">🔥</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Cinzel';font-weight:700;font-size:14px;color:var(--legion-dark);" id="streakTitle">No active streak</div>
+            <div style="font-size:11.5px;color:#8a6f3f;" id="streakSub">Patrol on consecutive days to grow your bonus</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#7a6a55;margin-bottom:4px;"><span>Next patrol</span><span id="patrolPct">0 / 300 steps</span></div>
+          <div class="rank-track" style="background:#00000016;border-color:#00000010;"><i id="patrolBar" style="width:0%;background:linear-gradient(90deg,var(--legion),var(--blood-bright));"></i></div>
+        </div>
+        <div class="statline" style="margin-top:10px;"><span>Skirmishes won</span><span class="v" id="patrolWins">0</span></div>
+        <div class="statline"><span>Plunder gathered on patrol</span><span class="v" id="patrolLoot">0</span></div>
+        <div id="patrolFeed" style="margin-top:6px;"></div>
+      </div>
+
+      <h2 class="section">Treasury &amp; Renown</h2>
+      <div class="card">
+        <div class="statline"><span>Steps banked (for orders)</span><span class="v" id="campBank">0</span></div>
+        <div class="statline"><span>Steps marched today</span><span class="v" id="campToday">0</span></div>
+        <div class="statline"><span>Lifetime steps (renown)</span><span class="v" id="campLife">0</span></div>
+        <div class="statline"><span>Battles won</span><span class="v" id="campWins">0</span></div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn ghost" style="flex:1;font-size:12px;padding:9px;" id="logBtn">Log a walk manually</button>
+          <button class="btn ghost" style="flex:1;font-size:12px;padding:9px;border-color:#8a7763;color:#7a6a55;box-shadow:inset 0 0 0 2px #8a776360;" id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <h2 class="section">Order of Battle</h2>
+      <div class="card" id="armyList"></div>
+    </section>
+
+    <!-- ===== RECRUIT ===== -->
+    <section class="screen" id="scr-recruit">
+      <h2 class="section">Recruit the Legions</h2>
+      <p class="note" style="margin:0 2px 12px;">Spend banked steps to enlist soldiers. Each new recruit swells your ranks and your Might.</p>
+      <div id="recruitList"></div>
+    </section>
+
+    <!-- ===== TRAIN ===== -->
+    <section class="screen" id="scr-train">
+      <h2 class="section">The Drill Field</h2>
+      <p class="note" style="margin:0 2px 12px;">Train a unit type to raise the attack, defense, and vigor of <em>every</em> soldier of that kind.</p>
+      <div id="trainList"></div>
+      <h2 class="section">Imperial Reforms</h2>
+      <p class="note" style="margin:0 2px 12px;">Permanent upgrades that strengthen the whole army.</p>
+      <div id="techList"></div>
+      <h2 class="section">Relics of Empire</h2>
+      <p class="note" style="margin:0 2px 12px;">Rare treasures plundered from <em>elite</em> patrols. Each grants a permanent boon to your legion.</p>
+      <div class="card" id="relicCard"></div>
+    </section>
+
+    <!-- ===== MARCH ===== -->
+    <section class="screen" id="scr-march">
+      <h2 class="section">The Campaign</h2>
+      <div class="card dark" id="provCard"></div>
+      <h2 class="section">Conquered Lands</h2>
+      <div class="card"><div class="conq-list" id="conqList"><span class="note">No lands conquered yet. The frontier awaits.</span></div></div>
+    </section>
+
+    <!-- ===== DEFEND ===== -->
+    <section class="screen" id="scr-defend">
+      <h2 class="section">Defend the Castra</h2>
+      <div class="card dark" id="defendCard"></div>
+      <p class="note" style="margin:2px;">Barbarian war-bands raid your camp. Repel them with your defensive strength to seize their plunder. Lose, and they sack your treasury.</p>
+    </section>
+
+    <!-- ===== KENNEL ===== -->
+    <section class="screen" id="scr-kennel">
+      <h2 class="section">The Legion's Hounds</h2>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:46px;line-height:1;">🐾</div>
+        <div class="hero" style="margin-top:8px;">
+          <div class="big"><div class="n" id="dogTotal">0</div><div class="l">Dogs Spotted</div></div>
+          <div class="divider"></div>
+          <div class="big"><div class="n" id="dogToday">0</div><div class="l">Spotted Today</div></div>
+          <div class="divider"></div>
+          <div class="big"><div class="n" id="dogPack">0</div><div class="l">Hounds Befriended</div></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#7a6a55;margin-bottom:4px;"><span id="dogNextLbl">Next hound</span><span id="dogNextPct"></span></div>
+          <div class="rank-track" style="background:#00000016;border-color:#00000010;"><i id="dogBar" style="width:0%;background:linear-gradient(90deg,#8a6f3f,#c9a24a);"></i></div>
+        </div>
+        <button class="btn gold block lg" id="dogBtn" style="margin-top:14px;">🐕 I Spotted a Dog!</button>
+        <small class="fine">Tap whenever a good dog crosses your path on a walk. Every sighting earns a treat of steps, and certain totals befriend a legendary hound for your camp.</small>
+      </div>
+      <h2 class="section">The Kennel</h2>
+      <div class="card" id="kennelList"></div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="active" data-scr="camp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 21V11l9-7 9 7v10h-6v-6H9v6z"/></svg>Camp</button>
+    <button data-scr="recruit"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg>Recruit</button>
+    <button data-scr="train"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 5 5 .5-3.8 3.3 1.2 5L12 18l-4.6 2.8 1.2-5L4.8 7.5 10 7z"/></svg>Train</button>
+    <button data-scr="march"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3l9 4-3 2 8 4-3 2 4 3-6 1 1 3-5-3-1-5 3-1-7-4 2-2-4-2z"/></svg>March</button>
+    <button data-scr="defend"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/></svg>Defend</button>
+    <button data-scr="kennel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.5 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm5-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm5 2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 12c-2.5 0-4.5 2.2-4.5 4 0 1.4 1.1 2 2.4 2 .9 0 1.4-.4 2.1-.4s1.2.4 2.1.4c1.3 0 2.4-.6 2.4-2 0-1.8-2-4-4.5-4z"/></svg>Kennel</button>
+  </nav>
+</div>
+
+<!-- Battle modal -->
+<div class="modal-bg" id="battleModal">
+  <div class="modal">
+    <div class="head"><h3 id="bmTitle">To Battle!</h3><div class="sub" id="bmSub"></div></div>
+    <div class="body">
+      <canvas id="battleCanvas" width="340" height="180"></canvas>
+      <div id="bmResult" style="display:none;">
+        <div class="spoils" id="bmSpoils"></div>
+        <button class="btn gold block lg" id="bmClose">Glory to Rome!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Log modal -->
+<div class="modal-bg" id="logModal">
+  <div class="modal">
+    <div class="head"><h3>Record a March</h3><div class="sub">Add steps you walked away from the app</div></div>
+    <div class="body">
+      <p class="note">Walked with the screen off, or on a treadmill? Add those steps to your treasury.</p>
+      <div class="inrow"><input type="number" id="logInput" inputmode="numeric" placeholder="e.g. 2500" min="0"></div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn ghost" style="flex:1" id="logCancel">Cancel</button>
+        <button class="btn gold" style="flex:1" id="logConfirm">Add Steps</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dog milestone reveal modal -->
+<div class="modal-bg" id="dogModal">
+  <div class="modal">
+    <div class="head" style="background:linear-gradient(180deg,#8a6f3f,#5f4a22);">
+      <h3 id="dogRevealName" style="font-size:20px;">A New Friend</h3>
+      <div class="sub" id="dogRevealBreed"></div>
+    </div>
+    <div class="body" style="text-align:center;">
+      <div id="dogRevealIcon" style="font-size:64px;line-height:1;margin:4px 0 10px;animation:fade .5s;">🐕</div>
+      <p class="note" id="dogRevealBlurb" style="color:#5c4d3e;font-size:14px;margin-bottom:12px;"></p>
+      <div class="spoils win" id="dogRevealSpoils"></div>
+      <button class="btn gold block lg" id="dogRevealClose">A loyal friend!</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   LEGIO — step-powered Roman army builder
+   Single file, vanilla JS. State persists in localStorage.
+   ============================================================ */
+
+/* ---------- Unit & content data ---------- */
+const COIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function footIcon(){return '<svg viewBox="0 0 24 24" fill="var(--gold-deep)"><path d="M8 3c2 0 3 2 3 5s-1 6-1 8c0 3-1 4-3 4s-3-2-3-5 1-5 1-7S6 3 8 3zm9 2c1.4 0 2 1.4 2 3s-1 3-2 3-2-1-2-3 .6-3 2-3z"/></svg>';}
+
+const UNITS = [
+  {id:'velites',   name:'Velites',    role:'Skirmishers',     cost:40,   atk:3,  def:1,  hp:8,
+    svg:'<path d="M12 2l2 4h-4z" fill="#e6cd8b"/><rect x="11" y="6" width="2" height="12" fill="#e6cd8b"/><path d="M9 9l6 0" stroke="#e6cd8b" stroke-width="2"/>'},
+  {id:'hastati',   name:'Hastati',    role:'Front line',      cost:120,  atk:6,  def:4,  hp:18,
+    svg:'<rect x="6" y="7" width="12" height="11" rx="2" fill="#e6cd8b"/><path d="M12 7v11M6 12h12" stroke="#7a1f24" stroke-width="1.5"/><path d="M12 3v3" stroke="#e6cd8b" stroke-width="2"/>'},
+  {id:'principes', name:'Principes',  role:'Veteran infantry',cost:320,  atk:10, def:7,  hp:28,
+    svg:'<path d="M12 3l6 3v6c0 4-3 7-6 8-3-1-6-4-6-8V6z" fill="#e6cd8b"/><path d="M12 7v8" stroke="#7a1f24" stroke-width="1.6"/>'},
+  {id:'sagittarii',name:'Sagittarii', role:'Archers',         cost:520,  atk:14, def:2,  hp:14,
+    svg:'<path d="M6 18C6 9 18 9 18 18" stroke="#e6cd8b" stroke-width="2" fill="none"/><path d="M6 18L18 6m0 0h-4m4 0v4" stroke="#e6cd8b" stroke-width="1.6" fill="none" stroke-linecap="round"/>'},
+  {id:'equites',   name:'Equites',    role:'Cavalry',         cost:780,  atk:18, def:5,  hp:32,
+    svg:'<path d="M4 16c1-5 5-8 9-8l5-3-1 4c2 2 3 5 3 8h-3l-1-4-3 4H8l1-4c-2 0-4 2-5 3z" fill="#e6cd8b"/>'},
+  {id:'triarii',   name:'Triarii',    role:'Elite spearmen',  cost:1200, atk:12, def:15, hp:48,
+    svg:'<rect x="7" y="6" width="10" height="13" rx="3" fill="#e6cd8b"/><path d="M12 2v6M9 19h6" stroke="#e6cd8b" stroke-width="2"/><circle cx="12" cy="12" r="2.4" fill="#7a1f24"/>'},
+  {id:'ballista',  name:'Ballista',   role:'Siege engine',    cost:3200, atk:48, def:4,  hp:30,
+    svg:'<path d="M3 17l9-9 9 9M7 13l5-5 5 5M11 8l1-4" stroke="#e6cd8b" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'warhound',  name:'War Hounds',  role:'Canes Pugnaces',  cost:650,  atk:17, def:3,  hp:22, locked:true,
+    svg:'<path d="M5 9L3 5l3.4 1.2L9 4l2.5 2.2L15 5l-2 4v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z" fill="#e6cd8b"/><circle cx="8.5" cy="11.5" r="1" fill="#7a1f24"/><circle cx="12.5" cy="11.5" r="1" fill="#7a1f24"/><path d="M10.5 14h0" stroke="#7a1f24" stroke-width="1.5" stroke-linecap="round"/>'}
+];
+const U = {}; UNITS.forEach(u=>U[u.id]=u);
+
+const TECH = [
+  {id:'gladius',  name:'Gladius Hispaniensis', desc:'+15% army attack',  cost:900,  k:'atkMult', v:0.15},
+  {id:'scutum',   name:'Reinforced Scuta',     desc:'+15% army defense', cost:900,  k:'defMult', v:0.15},
+  {id:'roads',    name:'Roman Roads',          desc:'Marches cost 25% fewer supply-steps', cost:1400, k:'supply', v:0.25},
+  {id:'medicus',  name:'Medicus Corps',        desc:'Recover 30% of casualties after a victory', cost:2200, k:'recover', v:0.30},
+  {id:'testudo',  name:'Testudo Drill',        desc:'+30% defense when holding the camp', cost:1800, k:'siege', v:0.30},
+  {id:'aquila',   name:'Aquila Standard',      desc:'+30% plunder from victories', cost:2800, k:'loot', v:0.30},
+  {id:'reform',   name:'Marian Reform',        desc:'+25% attack AND defense', cost:6000, k:'both', v:0.25}
+];
+
+const RELICS = [
+  {id:'aquila',  name:'The Lost Aquila',     desc:'+12% plunder from all patrols',     k:'patrolLoot', v:0.12, icon:'🦅'},
+  {id:'gladius', name:"Caesar's Gladius",    desc:'+8% army attack',                   k:'atk',        v:0.08, icon:'⚔️'},
+  {id:'aegis',   name:'Aegis of Scipio',     desc:'+8% army defense',                  k:'def',        v:0.08, icon:'🛡️'},
+  {id:'crown',   name:'The Civic Crown',     desc:'+12% plunder from conquests',       k:'warLoot',    v:0.12, icon:'👑'},
+  {id:'horn',    name:'Horn of Triumph',     desc:'Patrols trigger 60 steps sooner',   k:'patrolFast', v:60,   icon:'📯'},
+  {id:'charm',   name:'Charm of Asclepius',  desc:'+15% casualties recovered in war',  k:'recover',    v:0.15, icon:'🍃'},
+  {id:'vexillum',name:'The Golden Vexillum', desc:'Streak bonus grows twice as fast',  k:'streakBonus',v:0.05, icon:'🏵️'},
+  {id:'sandals', name:"Mercury's Sandals",   desc:'Patrols fight 15% stronger',        k:'patrolEdge', v:0.15, icon:'👟'}
+];
+const ELITE_FOES = ['a Barbarian Champion','a Gallic Warlord','a Renegade Centurion','a Germanic Chieftain','a Pirate Captain','a Numidian Raider-King'];
+
+// Dogs spotted on real walks — milestone hounds that join the camp
+const HOUNDS = [
+  {at:1,   icon:'🐕', name:'Stray of the Road', breed:'a scruffy camp-follower', steps:100,   blurb:'A hungry stray trots beside the marching column. The men share their rations, and it never leaves.'},
+  {at:3,   icon:'🐶', name:'Ferox',             breed:'a fearless brindle pup',  steps:250,   blurb:'Small but mighty, Ferox barks down anyone who dares approach the standard.'},
+  {at:6,   icon:'🐺', name:'Lupa',              breed:'a wolf-grey she-hound',   steps:600,   perk:{k:'patrolLoot',v:0.05}, perkT:'+5% patrol plunder', blurb:'Grey as a wolf and twice as loyal. The scouts swear she can smell an ambush a mile off.'},
+  {at:10,  icon:'🦮', name:'Cave Canem',        breed:'a black gate-guardian',   steps:1100,  perk:{k:'def',v:0.03}, perkT:'+3% army defense', blurb:'"Beware the dog." The camp gate has never been better watched.'},
+  {at:15,  icon:'🐕‍🦺', name:'Hannibal',         breed:'a captured war-dog',      steps:1700,  blurb:'Taken from the enemy and thoroughly converted to the Roman cause. Adores cheese.'},
+  {at:25,  icon:'🐾', name:'The Molossus Pack',  breed:'the Canes Pugnaces',     steps:3000,  perk:{k:'unlockUnit',v:1}, perkT:'Unlocks the War Hound unit!', blurb:'A whole pack of armoured Molossian war-hounds joins your legion. You may now recruit War Hounds into battle!'},
+  {at:40,  icon:'⭐', name:'Sirius',            breed:'the Dog-Star hound',      steps:5000,  perk:{k:'atk',v:0.04}, perkT:'+4% army attack', blurb:'Named for the brightest star in the sky, he charges into the fray like a falling comet.'},
+  {at:60,  icon:'🦴', name:'Cerberus',          breed:'three good boys in one',  steps:8000,  perk:{k:'patrolEdge',v:0.10}, perkT:'patrols fight +10% stronger', blurb:'Guardian of the enemy underworld. Three heads, three times the loyalty. A very good boy.'},
+  {at:100, icon:'🏅', name:'Argos',             breed:'the faithful eternal',    steps:18000, perk:{k:'streakBonus',v:0.05}, perkT:'streak bonus grows twice as fast', blurb:'The most loyal hound in all of history waited a lifetime for you. Now he walks at your side forever.'}
+];
+
+const PROVINCES = [
+  {n:'Latium',         e:'Latin Tribes'},
+  {n:'Etruria',        e:'Etruscan League'},
+  {n:'Samnium',        e:'Samnite Warriors'},
+  {n:'Magna Graecia',  e:'Greek Hoplites'},
+  {n:'Cisalpine Gaul', e:'Senones Gauls'},
+  {n:'Sicilia',        e:'Carthaginian Garrison'},
+  {n:'Hispania',       e:'Iberian Tribes'},
+  {n:'Africa',         e:"Hannibal's Host"},
+  {n:'Macedonia',      e:'Macedonian Phalanx'},
+  {n:'Pontus',         e:'Army of Mithridates'},
+  {n:'Gallia',         e:'Vercingetorix'},
+  {n:'Britannia',      e:'Celtic Britons'},
+  {n:'Germania',       e:'Germanic Hordes'},
+  {n:'Dacia',          e:'Dacian Falxmen'},
+  {n:'Parthia',        e:'Parthian Cataphracts'},
+  {n:'Aegyptus',       e:'Ptolemaic Legions'},
+  {n:'Judaea',         e:'Zealot Rebels'},
+  {n:'Armenia',        e:'Highland Kingdoms'},
+  {n:'Caledonia',      e:'Pictish Clans'},
+  {n:'Persia',         e:'Sassanid Immortals'}
+];
+
+const RANKS = [
+  {n:'Tiro',         min:0},
+  {n:'Miles',        min:3000},
+  {n:'Decanus',      min:12000},
+  {n:'Optio',        min:35000},
+  {n:'Centurion',    min:80000},
+  {n:'Primus Pilus', min:160000},
+  {n:'Tribune',      min:300000},
+  {n:'Legatus',      min:550000},
+  {n:'Praetor',      min:900000},
+  {n:'Imperator',    min:1500000}
+];
+
+/* ---------- State ---------- */
+const SAVE_KEY = 'legio_save_v1';
+let S = null;
+function freshState(){
+  const army = {}; UNITS.forEach(u=>army[u.id]=0);
+  const train = {}; UNITS.forEach(u=>train[u.id]=0);
+  return {
+    bank:0, today:0, life:0, wins:0, losses:0,
+    army, train, tech:{}, province:0,
+    autoRaid:true, autoAccum:0, autoWins:0, autoLoot:0, skirmishLog:[],
+    streak:1, streakDay:null, relics:[],
+    dogsTotal:0, dogsToday:0,
+    lastDay: new Date().toDateString(),
+    raidSeed: Math.floor(Math.random()*1e6)
+  };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){ S = JSON.parse(raw);
+      // migrate / fill gaps
+      const f = freshState();
+      UNITS.forEach(u=>{ if(S.army[u.id]==null)S.army[u.id]=0; if(S.train[u.id]==null)S.train[u.id]=0; });
+      for(const k in f){ if(S[k]==null) S[k]=f[k]; }
+    } else { S = freshState(); }
+  }catch(e){ S = freshState(); }
+  // daily roll
+  const d = new Date().toDateString();
+  if(S.lastDay !== d){ S.today = 0; S.dogsToday = 0; S.lastDay = d; }
+}
+let saveTimer=null;
+function save(now){
+  if(now){ try{localStorage.setItem(SAVE_KEY, JSON.stringify(S));}catch(e){} return; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ try{localStorage.setItem(SAVE_KEY, JSON.stringify(S));}catch(e){} }, 600);
+}
+
+/* ---------- Derived calculations ---------- */
+function techVal(k){ return S.tech[k] ? TECH.find(t=>t.id===k).v : 0; }
+function relicVal(k){ let s=0; (S.relics||[]).forEach(id=>{ const r=RELICS.find(x=>x.id===id); if(r&&r.k===k) s+=r.v; }); return s; }
+function houndVal(k){ let s=0; HOUNDS.forEach(h=>{ if((S.dogsTotal||0)>=h.at && h.perk && h.perk.k===k) s+=h.perk.v; }); return s; }
+function hasRelic(id){ return (S.relics||[]).includes(id); }
+function warhoundUnlocked(){ return (S.dogsTotal||0) >= 25; }
+function unitAvailable(u){ return !u.locked || warhoundUnlocked(); }
+function availableUnits(){ return UNITS.filter(unitAvailable); }
+function atkMult(){ let m=1+techVal('gladius')+relicVal('atk')+houndVal('atk'); if(S.tech.reform)m+=0.25; return m; }
+function defMult(){ let m=1+techVal('scutum')+relicVal('def')+houndVal('def'); if(S.tech.reform)m+=0.25; return m; }
+function trainFactor(uid){ return 1 + 0.18*(S.train[uid]||0); }
+function recoverFrac(){ return (S.tech.medicus?0.30:0) + relicVal('recover'); }
+function epochDay(){ const d=new Date(); d.setHours(0,0,0,0); return Math.round(d.getTime()/86400000); }
+function streakMult(){ const inc = 0.05 + relicVal('streakBonus') + houndVal('streakBonus'); return 1 + Math.min(0.6, ((S.streak||1)-1)*inc); }
+function streakPct(){ return Math.round((streakMult()-1)*100); }
+function tickStreak(){
+  const day=epochDay();
+  if(S.streakDay==null){ S.streak=1; S.streakDay=day; return true; }
+  const diff = day - S.streakDay;
+  if(diff===0) return false;          // already advanced today
+  if(diff===1){ S.streak=(S.streak||1)+1; S.streakDay=day; return true; } // continued
+  S.streak=1; S.streakDay=day; return true; // a day was missed — reset
+}
+
+function unitEff(uid){
+  const u=U[uid], tf=trainFactor(uid);
+  return {
+    atk: u.atk*tf*atkMult(),
+    def: u.def*tf*defMult(),
+    hp:  u.hp*tf
+  };
+}
+function armyStats(siege){
+  let atk=0,def=0,hp=0,count=0;
+  UNITS.forEach(u=>{
+    const c=S.army[u.id]; if(!c)return;
+    const e=unitEff(u.id);
+    atk+=e.atk*c; def+=e.def*c; hp+=e.hp*c; count+=c;
+  });
+  if(siege && S.tech.testudo) def*=1.3;
+  return {atk,def,hp,count};
+}
+function might(){
+  const a=armyStats();
+  return Math.round(a.atk*2 + a.def*1.5 + a.hp*0.4);
+}
+function totalTroops(){ let n=0; UNITS.forEach(u=>n+=S.army[u.id]); return n; }
+
+function rankInfo(){
+  let idx=0;
+  for(let i=0;i<RANKS.length;i++){ if(S.life>=RANKS[i].min) idx=i; }
+  const cur=RANKS[idx], next=RANKS[idx+1];
+  let pct=100;
+  if(next){ pct = Math.min(100, ((S.life-cur.min)/(next.min-cur.min))*100); }
+  return {cur,next,pct};
+}
+
+/* enemy army for province index */
+function provincePower(i){
+  const base = 60, growth = 1.42;
+  const total = Math.round(base*Math.pow(growth,i));
+  // split into atk/def/hp pools
+  return { atk: total*0.9, def: total*0.55, hp: total*2.6, label:total };
+}
+function raidPower(){
+  // raids scale with conquest progress, a touch easier than the frontier
+  const i = Math.max(1, S.province);
+  const base = 55, growth = 1.38;
+  const total = Math.round(base*Math.pow(growth, i-0.4) * (0.85+Math.random()*0.3));
+  return { atk: total*1.0, def: total*0.4, hp: total*2.2, label:total };
+}
+
+/* battle simulation: returns {win, rounds:[...], myLossFrac} */
+function simulate(meAtk,meDef,meHp, foe){
+  let myH=meHp, enH=foe.hp;
+  const log=[]; let r=0;
+  const mitig = 0.28;
+  while(myH>0 && enH>0 && r<60){
+    const dmgToFoe = Math.max(meAtk*0.15, meAtk*(0.8+Math.random()*0.4) - foe.def*mitig);
+    const dmgToMe  = Math.max(foe.atk*0.15, foe.atk*(0.8+Math.random()*0.4) - meDef*mitig);
+    enH-=dmgToFoe; myH-=dmgToMe; r++;
+    log.push({my:Math.max(0,myH)/meHp, en:Math.max(0,enH)/foe.hp});
+  }
+  const win = myH>0 && enH<=0 ? true : (enH>0 && myH<=0 ? false : myH>=enH);
+  const myLossFrac = Math.min(0.92, Math.max(0, (meHp-Math.max(0,myH))/meHp));
+  return {win, log, myLossFrac};
+}
+
+/* apply casualties proportional to loss fraction */
+function applyCasualties(frac){
+  let lost=0;
+  UNITS.forEach(u=>{
+    const c=S.army[u.id]; if(!c)return;
+    // each unit independently may fall ~ frac, with slight randomness
+    let dead=0;
+    for(let k=0;k<c;k++){ if(Math.random()<frac) dead++; }
+    S.army[u.id]-=dead; lost+=dead;
+  });
+  return lost;
+}
+
+/* ---------- Step counting ---------- */
+let tracking=false, motionSeen=false, smooth=9.81, prevDelta=0, lastStepT=0;
+const STEP_THRESH=1.15, STEP_MIN_MS=270;
+function onMotion(e){
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if(!a) return;
+  motionSeen=true;
+  const mag = Math.hypot(a.x||0, a.y||0, a.z||0);
+  smooth = smooth*0.82 + mag*0.18;
+  const delta = mag - smooth;
+  const now = e.timeStamp || performance.now();
+  if(prevDelta < STEP_THRESH && delta >= STEP_THRESH && (now-lastStepT) > STEP_MIN_MS){
+    lastStepT = now;
+    addSteps(1);
+  }
+  prevDelta = delta;
+}
+let stepBatch=0, pendingPatrol=false, currentScreen='camp';
+const PATROL_DIST=300;
+const PATROL_FOES=['bandits','deserters','horse-thieves','barbarian scouts','river raiders','hill brigands','a war-party','wandering mercenaries'];
+function patrolFoeName(){ return PATROL_FOES[Math.floor(Math.random()*PATROL_FOES.length)]; }
+function patrolDist(){ return Math.max(150, PATROL_DIST - relicVal('patrolFast')); }
+function autoFoe(){
+  const i = Math.max(1, S.province+1);
+  const base=40, growth=1.33;
+  const total = Math.round(base*Math.pow(growth, i-1) * (0.65+Math.random()*0.55));
+  return { atk: total*0.9, def: total*0.4, hp: total*1.8, label: total };
+}
+function runSkirmish(){
+  const streakUp = tickStreak();
+  const me=armyStats(false);
+  const edge = 1 + relicVal('patrolEdge') + houndVal('patrolEdge');
+  const elite = Math.random() < 0.05;
+  const foe = autoFoe();
+  if(elite){ foe.atk*=1.7; foe.def*=1.6; foe.hp*=1.8; foe.label=Math.round(foe.label*1.8); }
+  const res = simulate(me.atk*edge, me.def*edge, me.hp, foe);
+  let loot=0, relic=null;
+  let foeName = elite ? ELITE_FOES[Math.floor(Math.random()*ELITE_FOES.length)] : patrolFoeName();
+  if(res.win){
+    loot = Math.round((foe.label*1.3 + 10) * (elite?3:1) * (1+techVal('aquila')) * (1+relicVal('patrolLoot')+houndVal('patrolLoot')) * streakMult());
+    S.bank+=loot; S.autoWins=(S.autoWins||0)+1;
+    if(elite){
+      const unowned = RELICS.filter(r=>!hasRelic(r.id));
+      if(unowned.length && Math.random()<0.7){
+        relic = unowned[Math.floor(Math.random()*unowned.length)];
+        S.relics = S.relics||[]; S.relics.push(relic.id);
+      }
+    }
+  }
+  // scouting clashes never permanently kill troops — only loot is at stake
+  S.autoLoot=(S.autoLoot||0)+loot;
+  S.skirmishLog = S.skirmishLog||[];
+  S.skirmishLog.unshift({win:res.win, loot, foe:foeName, elite, relic: relic?relic.id:null});
+  if(S.skirmishLog.length>20) S.skirmishLog.length=20;
+  return {win:res.win, loot, streakUp, elite, relic};
+}
+function skirmishToast(s){
+  if(!s) return;
+  if(s.win && !s.lose) toast(s.win>1?`${s.win} patrols won · +${fmt(s.loot)} steps`:`Patrol victory · +${fmt(s.loot)} steps`);
+  else if(!s.win && s.lose) toast(s.lose>1?`${s.lose} patrols driven off`:`Patrol driven off — no plunder`);
+  else toast(`Patrols: ${s.win} won (+${fmt(s.loot)}), ${s.lose} lost`);
+}
+function addSteps(n, silent){
+  S.bank+=n; S.today+=n; S.life+=n; stepBatch+=n;
+  let sum=null;
+  if(S.autoRaid){
+    S.autoAccum=(S.autoAccum||0)+n;
+    if(totalTroops()>0){
+      const dist=patrolDist();
+      let fought=0; sum={win:0,lose:0,loot:0,elite:0,relics:[],streakUp:false};
+      while(S.autoAccum>=dist && fought<12){
+        S.autoAccum-=dist;
+        const r=runSkirmish(); fought++;
+        if(r.win){ sum.win++; sum.loot+=r.loot; } else sum.lose++;
+        if(r.elite) sum.elite++;
+        if(r.relic) sum.relics.push(r.relic);
+        if(r.streakUp) sum.streakUp=true;
+      }
+      if(fought===0){ sum=null; }
+      else {
+        pendingPatrol=true;
+        if(!silent){
+          if(sum.relics.length){ const r=RELICS.find(x=>x.id===sum.relics[0]); toast(`${r.icon} Relic recovered — ${r.name}!`); }
+          else if(sum.streakUp){ toast(`🔥 ${S.streak}-day streak · +${streakPct()}% patrol plunder`); }
+          else skirmishToast(sum);
+        }
+      }
+    } else if(S.autoAccum>patrolDist()){ S.autoAccum=patrolDist(); }
+  }
+  if(stepBatch>=8){
+    stepBatch=0; renderHeader(); save(); refreshAfford();
+    if(pendingPatrol){ pendingPatrol=false; if(currentScreen==='camp') renderPatrol(); }
+  }
+  return sum;
+}
+async function beginTracking(){
+  if(tracking){ stopTracking(); return; }
+  try{
+    if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+      const res = await DeviceMotionEvent.requestPermission();
+      if(res!=='granted'){ setSensor('denied'); return; }
+    }
+  }catch(err){ /* fall through */ }
+  window.addEventListener('devicemotion', onMotion);
+  tracking=true; motionSeen=false; setSensor('on');
+  setTimeout(()=>{ if(tracking && !motionSeen) setSensor('nosensor'); }, 2500);
+}
+function stopTracking(){
+  window.removeEventListener('devicemotion', onMotion);
+  tracking=false; setSensor('off');
+}
+function setSensor(state){
+  const row=document.getElementById('sensorRow'),
+        t=document.getElementById('sensorTitle'),
+        s=document.getElementById('sensorSub'),
+        b=document.getElementById('trackBtn');
+  row.classList.toggle('on', state==='on');
+  if(state==='on'){ t.textContent='Marching — sensor live'; s.textContent='Your steps now feed the legion. Keep walking!'; b.textContent='Halt the March'; b.className='btn ghost block'; }
+  else if(state==='off'){ t.textContent='Pedometer asleep'; s.textContent='Tap to let the legion count your every step.'; b.textContent='Begin the March'; b.className='btn gold block'; }
+  else if(state==='denied'){ t.textContent='Permission denied'; s.textContent='Motion access was blocked. Use “Log a walk manually” instead.'; b.textContent='Try Again'; b.className='btn gold block'; }
+  else if(state==='nosensor'){ t.textContent='No motion detected'; s.textContent='This device may lack a pedometer (or you are still). You can log walks manually.'; b.textContent='Keep Trying'; b.className='btn gold block'; }
+}
+
+/* ---------- Rendering ---------- */
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function renderHeader(){
+  document.getElementById('bankBig').textContent=fmt(S.bank);
+  document.getElementById('todaySteps').textContent=fmt(S.today);
+  document.getElementById('mightVal').textContent=fmt(might());
+  const ri=rankInfo();
+  document.getElementById('rankName').textContent=ri.cur.n+' of the Walking Legion';
+  document.getElementById('rankBar').style.width=ri.pct+'%';
+}
+function renderCamp(){
+  document.getElementById('campTroops').textContent=fmt(totalTroops());
+  document.getElementById('campMight').textContent=fmt(might());
+  document.getElementById('campProv').textContent=S.province;
+  document.getElementById('campBank').textContent=fmt(S.bank);
+  document.getElementById('campToday').textContent=fmt(S.today);
+  document.getElementById('campLife').textContent=fmt(S.life);
+  document.getElementById('campWins').textContent=fmt(S.wins);
+  const list=document.getElementById('armyList');
+  let any=false; let html='';
+  UNITS.forEach(u=>{
+    const c=S.army[u.id]; if(!c)return; any=true;
+    const e=unitEff(u.id);
+    html+=unitRow(u,c,e,false);
+  });
+  list.innerHTML = any?html : '<p class="note" style="text-align:center;padding:8px 0;">Your camp is empty. March to gather steps, then recruit your first soldiers.</p>';
+  renderPatrol();
+}
+function renderPatrol(){
+  const on = S.autoRaid!==false;
+  const onB=document.getElementById('autoOn'), offB=document.getElementById('autoOff');
+  if(onB){ onB.classList.toggle('on', on); offB.classList.toggle('on', !on); }
+  const dist=patrolDist();
+  const acc=Math.min(dist, S.autoAccum||0);
+  const pct=document.getElementById('patrolPct'); if(!pct) return;
+  pct.textContent = `${acc} / ${dist} steps`;
+  document.getElementById('patrolBar').style.width = Math.min(100, acc/dist*100)+'%';
+  document.getElementById('patrolWins').textContent = fmt(S.autoWins||0);
+  document.getElementById('patrolLoot').textContent = fmt(S.autoLoot||0);
+  // streak strip
+  const st=S.streak||1, atRisk = S.streakDay!=null && (epochDay()-S.streakDay)>1;
+  const sTitle=document.getElementById('streakTitle'), sSub=document.getElementById('streakSub');
+  if(sTitle){
+    if(S.streakDay==null){ sTitle.textContent='No active streak'; sSub.textContent='Patrol on consecutive days to grow your bonus'; }
+    else if(atRisk){ sTitle.textContent=`Streak at risk (${st} ${st===1?'day':'days'})`; sSub.textContent='Win a patrol today to keep it alive'; }
+    else { sTitle.textContent=`${st}-day patrol streak`; sSub.textContent=`+${streakPct()}% plunder · grows to +60% at day ${Math.ceil(0.6/(0.05+relicVal('streakBonus')))+1}`; }
+  }
+  const feed=document.getElementById('patrolFeed'), log=S.skirmishLog||[];
+  if(!on){ feed.innerHTML='<p class="note" style="text-align:center;padding:4px 0;">Patrols halted. Toggle On to resume.</p>'; return; }
+  if(!log.length){ feed.innerHTML='<p class="note" style="text-align:center;padding:4px 0;">No patrols yet — recruit an army and start walking.</p>'; return; }
+  feed.innerHTML = log.slice(0,5).map(e=>{
+    const rel = e.relic ? RELICS.find(r=>r.id===e.relic) : null;
+    const label = e.win ? (e.elite?'★ Defeated':'⚔ Routed') : (e.elite?'✕ Outmatched by':'✕ Driven off by');
+    const right = rel ? `<span style="font-family:'Cinzel';font-weight:700;color:#7a4fb0;">${rel.icon} relic!</span>`
+                      : `<span style="font-family:'Cinzel';font-weight:700;color:${e.loot>0?'var(--gold-deep)':'#9a8a76'};">${e.loot>0?'+'+fmt(e.loot):'—'}</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-top:1px dashed #0000001c;">
+      <span style="color:${e.win?(e.elite?'#9a7424':'var(--good)'):'var(--bad)'};${e.elite?'font-weight:600;':''}">${label} ${e.foe}</span>${right}
+    </div>`;
+  }).join('');
+}
+function renderRelics(){
+  const card=document.getElementById('relicCard'); if(!card) return;
+  const owned=S.relics||[];
+  card.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:9px;">` + RELICS.map(r=>{
+    const have=owned.includes(r.id);
+    return `<div style="flex:1 1 calc(50% - 5px);min-width:140px;border-radius:11px;padding:11px;
+      background:${have?'linear-gradient(160deg,#f6ecd2,#ecdcb4)':'#0000000d'};
+      border:1px solid ${have?'#c9a24a88':'#00000018'};${have?'box-shadow:inset 0 1px 0 #fff8;':'opacity:.85;'}">
+      <div style="font-size:22px;">${have?r.icon:'🔒'}</div>
+      <div style="font-family:'Cinzel';font-weight:700;font-size:13.5px;color:${have?'var(--legion-dark)':'#9a8a76'};margin-top:3px;">${have?r.name:'Undiscovered'}</div>
+      <div style="font-size:11.5px;color:${have?'#897460':'#a8987e'};margin-top:2px;line-height:1.3;">${have?r.desc:'Defeat an elite patrol to claim it'}</div>
+    </div>`;
+  }).join('') + `</div>
+  <div class="note" style="text-align:center;margin-top:12px;">${owned.length} of ${RELICS.length} relics recovered · elite patrols appear ~5% of the time</div>`;
+}
+function nextHound(){ return HOUNDS.find(h=>(S.dogsTotal||0) < h.at) || null; }
+function houndsBefriended(){ return HOUNDS.filter(h=>(S.dogsTotal||0)>=h.at).length; }
+function logDog(){
+  S.dogsTotal=(S.dogsTotal||0)+1;
+  S.dogsToday=(S.dogsToday||0)+1;
+  const treat=20; S.bank+=treat;
+  const hit=HOUNDS.find(h=>h.at===S.dogsTotal);
+  if(hit){
+    S.bank+=hit.steps;
+    if(hit.perk && hit.perk.k==='unlockUnit'){ renderRecruit(); renderTrain(); }
+    showDogReveal(hit, treat+hit.steps);
+  } else {
+    const lines=['A very good dog!','What a handsome hound!','A noble beast crosses your path.','The omen is favourable!','Who let the dogs out? You did.'];
+    toast(`🐾 ${lines[Math.floor(Math.random()*lines.length)]} +${treat} steps · ${fmt(S.dogsTotal)} total`);
+  }
+  save(true); renderHeader(); renderKennel(); refreshAfford();
+}
+function showDogReveal(h, reward){
+  document.getElementById('dogRevealName').textContent='You befriended '+h.name+'!';
+  document.getElementById('dogRevealBreed').textContent=h.breed;
+  document.getElementById('dogRevealIcon').textContent=h.icon;
+  document.getElementById('dogRevealBlurb').textContent=h.blurb;
+  let sp=`<div class="s win"><div class="n">+${fmt(reward)}</div><div class="l">Steps</div></div>`;
+  if(h.perkT) sp+=`<div class="s win"><div class="n" style="font-size:18px;color:#7a4fb0;">${h.icon}</div><div class="l">${h.perkT}</div></div>`;
+  document.getElementById('dogRevealSpoils').innerHTML=sp;
+  document.getElementById('dogModal').classList.add('show');
+}
+function renderKennel(){
+  const tot=S.dogsTotal||0;
+  document.getElementById('dogTotal').textContent=fmt(tot);
+  document.getElementById('dogToday').textContent=fmt(S.dogsToday||0);
+  document.getElementById('dogPack').textContent=fmt(houndsBefriended());
+  const nx=nextHound();
+  const lbl=document.getElementById('dogNextLbl'), pctEl=document.getElementById('dogNextPct'), bar=document.getElementById('dogBar');
+  if(nx){
+    const prev=[...HOUNDS].reverse().find(h=>tot>=h.at);
+    const base=prev?prev.at:0;
+    const pct=Math.min(100, (tot-base)/(nx.at-base)*100);
+    lbl.textContent=`Next hound at ${nx.at} dogs`;
+    pctEl.textContent=`${tot} / ${nx.at}`;
+    bar.style.width=pct+'%';
+  } else {
+    lbl.textContent='Every hound befriended!'; pctEl.textContent='★'; bar.style.width='100%';
+  }
+  const list=document.getElementById('kennelList');
+  list.innerHTML = HOUNDS.map(h=>{
+    const have=tot>=h.at;
+    return `<div class="unit" style="${have?'':'opacity:.7;'}">
+      <div class="glyph" style="${have?'':'background:#0000000d;box-shadow:inset 0 0 0 1px #00000018;'}font-size:24px;">${have?h.icon:'🦴'}</div>
+      <div class="info">
+        <div class="nm">${have?h.name:'???'}</div>
+        <div class="role">${have?h.breed:`Befriend at ${h.at} dogs spotted`}</div>
+        ${have && h.perkT ? `<div class="mini"><span style="color:#7a4fb0;font-weight:600;">✦ ${h.perkT}</span></div>` : ''}
+      </div>
+      <div class="right"><div class="count ${have?'':'zero'}" style="font-size:15px;">${have?'✓':h.at}</div></div>
+    </div>`;
+  }).join('');
+}
+function unitRow(u,c,e,showCost){
+  const lvl=S.train[u.id]||0;
+  return `<div class="unit">
+    <div class="glyph"><svg viewBox="0 0 24 24">${u.svg}</svg></div>
+    <div class="info">
+      <div class="nm">${u.name}${lvl?` <span style="color:var(--gold-deep);font-size:12px;">·Lv${lvl}</span>`:''}</div>
+      <div class="role">${u.role}</div>
+      <div class="mini"><span>⚔ <b>${e.atk.toFixed(0)}</b></span><span>🛡 <b>${e.def.toFixed(0)}</b></span><span>❤ <b>${e.hp.toFixed(0)}</b></span></div>
+    </div>
+    <div class="right"><div class="count ${c?'':'zero'}">${c}</div></div>
+  </div>`;
+}
+function renderRecruit(){
+  const wrap=document.getElementById('recruitList');
+  wrap.innerHTML = availableUnits().map(u=>{
+    const e=unitEff(u.id), c=S.army[u.id];
+    const can1=S.bank>=u.cost, can5=S.bank>=u.cost*5;
+    return `<div class="card">
+      <div class="unit" style="border:none;padding:0 0 10px;">
+        <div class="glyph"><svg viewBox="0 0 24 24">${u.svg}</svg></div>
+        <div class="info">
+          <div class="nm">${u.name}</div>
+          <div class="role">${u.role}</div>
+          <div class="mini"><span>⚔ <b>${e.atk.toFixed(0)}</b></span><span>🛡 <b>${e.def.toFixed(0)}</b></span><span>❤ <b>${e.hp.toFixed(0)}</b></span></div>
+        </div>
+        <div class="right"><div class="count ${c?'':'zero'}">${c}</div><div class="cost ${can1?'':'afford-no'}" style="margin-top:4px;">${COIN}${fmt(u.cost)}</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-sm" data-recruit="${u.id}" data-qty="1" ${can1?'':'disabled'}>Enlist 1</button>
+        <button class="btn-sm" data-recruit="${u.id}" data-qty="5" ${can5?'':'disabled'}>Enlist 5 · ${fmt(u.cost*5)}</button>
+        <button class="btn-sm alt" data-recruit="${u.id}" data-qty="max" ${can1?'':'disabled'}>Max</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderTrain(){
+  const wrap=document.getElementById('trainList');
+  wrap.innerHTML = availableUnits().map(u=>{
+    const lvl=S.train[u.id]||0;
+    const cost=Math.round(u.cost*1.6*(lvl+1));
+    const can=S.bank>=cost;
+    const e=unitEff(u.id);
+    return `<div class="card">
+      <div class="unit" style="border:none;padding:0 0 10px;">
+        <div class="glyph"><svg viewBox="0 0 24 24">${u.svg}</svg></div>
+        <div class="info">
+          <div class="nm">${u.name} <span style="color:var(--gold-deep);font-size:12px;">· Drill Lv ${lvl}</span></div>
+          <div class="role">Each level: +18% attack, defense &amp; vigor</div>
+          <div class="mini"><span>⚔ <b>${e.atk.toFixed(0)}</b></span><span>🛡 <b>${e.def.toFixed(0)}</b></span><span>❤ <b>${e.hp.toFixed(0)}</b></span></div>
+        </div>
+      </div>
+      <button class="btn-sm" style="flex:none;width:100%;${can?'':'opacity:.5;'}" data-train="${u.id}" ${can?'':'disabled'}>Train Lv ${lvl+1} · ${fmt(cost)} steps</button>
+    </div>`;
+  }).join('');
+
+  const tw=document.getElementById('techList');
+  tw.innerHTML = TECH.map(t=>{
+    const owned=!!S.tech[t.id], can=S.bank>=t.cost;
+    return `<div class="card" style="${owned?'opacity:.92;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div style="flex:1;">
+          <div class="nm" style="font-family:'Cinzel';font-weight:700;color:var(--legion-dark);font-size:15px;">${t.name}</div>
+          <div class="role" style="font-size:12.5px;color:#897460;">${t.desc}</div>
+        </div>
+        ${owned
+          ? '<span class="banner-tag tag-done" style="box-shadow:inset 0 0 0 1px var(--good);color:var(--good);">Adopted</span>'
+          : `<button class="btn-sm" style="flex:none;width:auto;padding:9px 14px;${can?'':'opacity:.5;'}" data-tech="${t.id}" ${can?'':'disabled'}>${fmt(t.cost)}</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  renderRelics();
+}
+function oddsBar(meP, foeP){
+  const total=meP+foeP||1; const mp=Math.round(meP/total*100);
+  let txt;
+  if(mp>=70) txt='Victory looks certain';
+  else if(mp>=55) txt='The odds favour Rome';
+  else if(mp>=45) txt='An even, bloody contest';
+  else if(mp>=30) txt='A desperate gamble';
+  else txt='Near-suicidal — train more first';
+  return {mp, fp:100-mp, txt};
+}
+function powScore(a){ return a.atk*1.6 + a.def*1.1 + a.hp*0.5; }
+function renderMarch(){
+  const card=document.getElementById('provCard');
+  if(S.province>=PROVINCES.length){
+    card.innerHTML='<div style="text-align:center;padding:14px;"><div class="prov-hd" style="justify-content:center;"><span class="pname">The World is Rome\'s</span></div><p class="note" style="color:#e8dcc0;margin-top:8px;">Every province bows to your eagles, Imperator. You have conquered all known lands. Keep walking to grow your legend.</p></div>';
+  } else {
+    const p=PROVINCES[S.province], foe=provincePower(S.province);
+    const me=armyStats(false);
+    const supply=marchCost();
+    const o=oddsBar(powScore(me), powScore(foe));
+    const canSupply=S.bank>=supply, hasArmy=me.count>0;
+    card.innerHTML=`
+      <div class="prov-hd">
+        <div><div class="pno">Province ${S.province+1} of ${PROVINCES.length}</div><div class="pname">${p.n}</div></div>
+        <span class="banner-tag tag-frontier">Frontier</span>
+      </div>
+      <p class="note" style="color:#e2d5b8;margin:6px 0 2px;">Defended by the <b style="color:#e89a86;">${p.e}</b>.</p>
+      <div class="vs">
+        <div class="side me"><div class="lab">Your Might</div><div class="pw">${fmt(powScore(me))}</div></div>
+        <div class="swords">⚔</div>
+        <div class="side foe"><div class="lab">Enemy</div><div class="pw">${fmt(powScore(foe))}</div></div>
+      </div>
+      <div class="odds"><i class="me" style="width:${o.mp}%"></i><i class="foe" style="width:${o.fp}%"></i></div>
+      <div class="odds-txt">${o.txt}</div>
+      <button class="btn gold block lg" id="marchBtn" ${(canSupply&&hasArmy)?'':'disabled'}>
+        ${!hasArmy?'Recruit an army first':(canSupply?`March to Battle · ${fmt(supply)} supply-steps`:`Need ${fmt(supply)} steps to march`)}
+      </button>`;
+    const mb=document.getElementById('marchBtn');
+    if(mb) mb.onclick=()=>doBattle('attack');
+  }
+  const cl=document.getElementById('conqList');
+  if(S.province>0){
+    cl.innerHTML = PROVINCES.slice(0,S.province).map(p=>`<span class="conq-chip">✦ ${p.n}</span>`).join('');
+  } else {
+    cl.innerHTML='<span class="note">No lands conquered yet. The frontier awaits.</span>';
+  }
+}
+function marchCost(){
+  const base = 200 + S.province*90;
+  return Math.round(base * (1 - techVal('roads')));
+}
+function renderDefend(){
+  const card=document.getElementById('defendCard');
+  const me=armyStats(true);
+  const foe = currentRaid || (currentRaid = raidPower());
+  const o=oddsBar(powScore(me), powScore(foe));
+  const hasArmy=me.count>0;
+  card.innerHTML=`
+    <div class="prov-hd">
+      <div><div class="pno">Incoming Raid</div><div class="pname" style="color:#e89a86;">Barbarians at the Gate</div></div>
+      <span class="banner-tag" style="background:#7a322a;color:#f3d2c9;">Raid</span>
+    </div>
+    <p class="note" style="color:#e2d5b8;margin:6px 0 2px;">A war-band approaches your camp${S.tech.testudo?' — your Testudo Drill stiffens the defence':''}.</p>
+    <div class="vs">
+      <div class="side me"><div class="lab">Your Defence</div><div class="pw">${fmt(powScore(me))}</div></div>
+      <div class="swords">🛡</div>
+      <div class="side foe"><div class="lab">Raiders</div><div class="pw">${fmt(powScore(foe))}</div></div>
+    </div>
+    <div class="odds"><i class="me" style="width:${o.mp}%"></i><i class="foe" style="width:${o.fp}%"></i></div>
+    <div class="odds-txt">${o.txt}</div>
+    <button class="btn block lg" id="defendBtn" ${hasArmy?'':'disabled'} style="${hasArmy?'':'filter:grayscale(.7);opacity:.5;'}">
+      ${hasArmy?'Hold the Line!':'You have no soldiers to defend'}
+    </button>`;
+  const db=document.getElementById('defendBtn');
+  if(db) db.onclick=()=>doBattle('defend');
+  // badge
+  document.querySelector('nav .badge')?.remove();
+  if(hasArmy){
+    const btn=document.querySelector('nav button[data-scr="defend"]');
+    const b=document.createElement('span'); b.className='badge'; b.textContent='!'; btn.appendChild(b);
+  }
+}
+let currentRaid=null;
+
+function refreshAfford(){
+  // light refresh of buttons on visible screens
+  const active=document.querySelector('.screen.active')?.id;
+  if(active==='scr-recruit') renderRecruit();
+  else if(active==='scr-train') renderTrain();
+  else if(active==='scr-march') renderMarch();
+  else if(active==='scr-defend') renderDefend();
+  else if(active==='scr-camp') renderCamp();
+}
+function renderAll(){ renderHeader(); renderCamp(); }
+
+/* ---------- Actions ---------- */
+function recruit(uid, qty){
+  const u=U[uid];
+  let n = qty==='max' ? Math.floor(S.bank/u.cost) : qty;
+  if(n<=0 || S.bank < u.cost) { toast('Not enough steps'); return; }
+  n = Math.min(n, Math.floor(S.bank/u.cost));
+  S.bank -= u.cost*n; S.army[uid]+=n;
+  save(); renderHeader(); renderRecruit(); renderCamp();
+  toast(`Enlisted ${n} ${u.name}`);
+}
+function train(uid){
+  const u=U[uid], lvl=S.train[uid]||0, cost=Math.round(u.cost*1.6*(lvl+1));
+  if(S.bank<cost){ toast('Not enough steps'); return; }
+  S.bank-=cost; S.train[uid]=lvl+1;
+  save(); renderHeader(); renderTrain();
+  toast(`${u.name} trained to Lv ${lvl+1}`);
+}
+function buyTech(tid){
+  const t=TECH.find(x=>x.id===tid);
+  if(S.tech[tid]) return;
+  if(S.bank<t.cost){ toast('Not enough steps'); return; }
+  S.bank-=t.cost; S.tech[tid]=true;
+  save(); renderHeader(); renderTrain();
+  toast(`Reform adopted: ${t.name}`);
+}
+
+/* ---------- Battle flow + animation ---------- */
+let bmCloseHandler=null;
+function doBattle(mode){
+  const me = armyStats(mode==='defend');
+  let foe, supply=0;
+  if(mode==='attack'){
+    foe = provincePower(S.province);
+    supply = marchCost();
+    if(S.bank<supply){ toast('Not enough supply-steps'); return; }
+    S.bank-=supply;
+  } else {
+    foe = currentRaid || raidPower();
+  }
+  const result = simulate(me.atk, me.def, me.hp, foe);
+  openBattle(mode, foe, result, supply);
+}
+function openBattle(mode, foe, result, supply){
+  const modal=document.getElementById('battleModal');
+  document.getElementById('bmTitle').textContent = mode==='attack' ? 'To Battle!' : 'Defend the Camp!';
+  document.getElementById('bmSub').textContent = mode==='attack'
+    ? 'Marching on '+PROVINCES[S.province].n
+    : 'Barbarian raiders strike the Castra';
+  document.getElementById('bmResult').style.display='none';
+  modal.classList.add('show');
+  save(true); renderHeader();
+  animateBattle(result, ()=>resolveBattle(mode,foe,result,supply));
+}
+function resolveBattle(mode, foe, result, supply){
+  let lootSteps=0, lost=0, recovered=0;
+  const lootMult = (1 + techVal('aquila')) * (1 + relicVal('warLoot'));
+  const recFrac = recoverFrac();
+  if(result.win){
+    lost = applyCasualties(result.myLossFrac*0.55); // winners lose fewer
+    if(recFrac>0){ recovered=Math.round(lost*recFrac); reviveTroops(recovered); }
+    if(mode==='attack'){
+      lootSteps = Math.round((foe.label*6 + 150) * lootMult);
+      S.bank+=lootSteps; S.wins++; S.province++;
+      currentRaid=null;
+    } else {
+      lootSteps = Math.round((foe.label*4 + 80) * lootMult);
+      S.bank+=lootSteps; S.wins++;
+      currentRaid=raidPower(); // next wave
+    }
+  } else {
+    lost = applyCasualties(Math.max(0.35, result.myLossFrac));
+    S.losses++;
+    if(mode==='defend'){
+      const pillage=Math.round(S.bank*0.15);
+      S.bank-=pillage; lootSteps=-pillage;
+      currentRaid=raidPower();
+    }
+  }
+  save(true); renderHeader(); renderCamp();
+  showResult(mode, result.win, {lootSteps, lost, recovered, supply});
+}
+function reviveTroops(n){
+  // bring back n soldiers, cheapest-first to feel fair
+  let left=n;
+  for(let i=0;i<UNITS.length && left>0;i++){
+    const add=Math.min(left, Math.ceil(n/UNITS.length)+1);
+    S.army[UNITS[i].id]+=add; left-=add;
+  }
+}
+function showResult(mode, win, info){
+  const head=document.querySelector('#battleModal .head');
+  document.getElementById('bmTitle').textContent = win ? (mode==='attack'?'VICTORY':'CAMP HELD') : (mode==='attack'?'DEFEAT':'CAMP SACKED');
+  head.style.background = win ? 'linear-gradient(180deg,#3f6b32,#2c4a22)' : 'linear-gradient(180deg,#6b1f1a,#451310)';
+  document.getElementById('bmSub').textContent = win
+    ? (mode==='attack'?'The province bows to Rome': 'The raiders are scattered')
+    : (mode==='attack'?'Your legion is thrown back':'The barbarians breach the gates');
+  const sp=document.getElementById('bmSpoils');
+  const cls = win?'win':'lose';
+  let html='';
+  if(info.lootSteps>0) html+=`<div class="s ${cls}"><div class="n">+${fmt(info.lootSteps)}</div><div class="l">Plunder (steps)</div></div>`;
+  if(info.lootSteps<0) html+=`<div class="s lose"><div class="n">−${fmt(-info.lootSteps)}</div><div class="l">Pillaged</div></div>`;
+  html+=`<div class="s ${cls}"><div class="n" style="color:var(--bad)">−${fmt(info.lost)}</div><div class="l">Fallen</div></div>`;
+  if(info.recovered>0) html+=`<div class="s win"><div class="n">+${fmt(info.recovered)}</div><div class="l">Medicus saved</div></div>`;
+  sp.innerHTML=html;
+  document.getElementById('bmResult').style.display='block';
+  const btn=document.getElementById('bmClose');
+  btn.textContent = win?'Glory to Rome!':'Regroup';
+  btn.className='btn gold block lg';
+  bmCloseHandler=()=>{
+    document.getElementById('battleModal').classList.remove('show');
+    refreshAfford(); renderCamp();
+  };
+}
+document.getElementById('bmClose').addEventListener('click',()=>bmCloseHandler&&bmCloseHandler());
+
+/* canvas battle animation */
+function animateBattle(result, done){
+  const cv=document.getElementById('battleCanvas');
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=cv.clientWidth||340, H=180;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  const N=7;
+  const rome=[], barb=[];
+  for(let i=0;i<N;i++){ rome.push({x:30+ (i%4)*16, y:H-40-Math.floor(i/4)*26, a:true}); }
+  for(let i=0;i<N;i++){ barb.push({x:W-30-(i%4)*16, y:H-40-Math.floor(i/4)*26, a:true}); }
+  let frame=0; const total=72; const steps=result.log;
+  function soldier(x,y,foe,alive,clash){
+    ctx.globalAlpha = alive?1:0.12;
+    // body
+    ctx.fillStyle = foe ? '#5a3a24' : '#7a1f24';
+    ctx.fillRect(x-5,y-14,10,16);
+    // shield / helm
+    ctx.fillStyle = foe ? '#7a5a38' : '#c9a24a';
+    ctx.beginPath(); ctx.arc(x, y-18, 5, 0, Math.PI*2); ctx.fill();
+    if(!foe){ ctx.fillStyle='#c9a24a'; ctx.fillRect(x-7,y-12,3,12); } // scutum
+    else { ctx.strokeStyle='#3a2410'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+6,y-16); ctx.lineTo(x+6,y-2); ctx.stroke(); } // spear
+    ctx.globalAlpha=1;
+  }
+  function draw(){
+    frame++;
+    const t=Math.min(1, frame/total);
+    const li=Math.min(steps.length-1, Math.floor(t*(steps.length)));
+    const st=steps[li]||{my:result.win?0.6:0.1, en:result.win?0.1:0.6};
+    // background ground
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#9c854f'; ctx.fillRect(0,H-18,W,18);
+    // dust
+    // advance toward center then clash shake
+    const adv = Math.min(1, t*1.6);
+    const shake = (t>0.4 && t<0.95) ? (Math.random()-0.5)*3 : 0;
+    const aliveR=Math.max(0, Math.round(N*st.my));
+    const aliveB=Math.max(0, Math.round(N*st.en));
+    ctx.save(); ctx.translate(shake,0);
+    rome.forEach((s,i)=>{ const x=s.x + adv*(W/2-70); soldier(x,s.y,false, i<aliveR); });
+    barb.forEach((s,i)=>{ const x=s.x - adv*(W/2-70); soldier(x,s.y,true, i<aliveB); });
+    ctx.restore();
+    // clash sparks
+    if(t>0.4 && t<0.92){
+      for(let k=0;k<3;k++){
+        ctx.fillStyle='rgba(255,230,150,'+(Math.random()*0.7)+')';
+        ctx.beginPath(); ctx.arc(W/2+(Math.random()-0.5)*40, H-46+(Math.random()-0.5)*30, Math.random()*3+1,0,7); ctx.fill();
+      }
+    }
+    // HP bars
+    bar(8, 10, W*0.4, st.my, '#c9a24a', 'SPQR');
+    bar(W-8-W*0.4, 10, W*0.4, st.en, '#c4554a', 'FOE', true);
+    if(frame<total){ requestAnimationFrame(draw); }
+    else { setTimeout(done, 250); }
+  }
+  function bar(x,y,w,v,col,label,right){
+    ctx.fillStyle='#0004'; ctx.fillRect(x,y,w,8);
+    ctx.fillStyle=col;
+    if(right){ ctx.fillRect(x+w*(1-v),y,w*v,8); } else { ctx.fillRect(x,y,w*v,8); }
+    ctx.fillStyle='#fff'; ctx.font='bold 9px Cinzel, serif';
+    ctx.textAlign=right?'right':'left';
+    ctx.fillText(label, right?x+w:x, y-3);
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ---------- Misc UI ---------- */
+let toastT=null;
+function toast(msg){
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),1700);
+}
+function switchScreen(name){
+  currentScreen=name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('scr-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.scr===name));
+  document.querySelector('main').scrollTop=0;
+  if(name==='camp')renderCamp();
+  else if(name==='recruit')renderRecruit();
+  else if(name==='train')renderTrain();
+  else if(name==='march')renderMarch();
+  else if(name==='defend')renderDefend();
+  else if(name==='kennel')renderKennel();
+}
+
+/* event wiring */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.scr)));
+document.getElementById('trackBtn').addEventListener('click', beginTracking);
+document.addEventListener('click',(e)=>{
+  const r=e.target.closest('[data-recruit]'); if(r){ recruit(r.dataset.recruit, r.dataset.qty==='max'?'max':parseInt(r.dataset.qty)); return; }
+  const t=e.target.closest('[data-train]'); if(t){ train(t.dataset.train); return; }
+  const k=e.target.closest('[data-tech]'); if(k){ buyTech(k.dataset.tech); return; }
+});
+// manual log
+document.getElementById('logBtn').addEventListener('click',()=>{ document.getElementById('logInput').value=''; document.getElementById('logModal').classList.add('show'); setTimeout(()=>document.getElementById('logInput').focus(),100); });
+document.getElementById('logCancel').addEventListener('click',()=>document.getElementById('logModal').classList.remove('show'));
+document.getElementById('logConfirm').addEventListener('click',()=>{
+  const v=parseInt(document.getElementById('logInput').value||'0');
+  if(v>0){
+    const sum=addSteps(v,true);
+    save(true); renderHeader(); renderCamp(); refreshAfford();
+    if(sum && sum.relics && sum.relics.length){ const r=RELICS.find(x=>x.id===sum.relics[0]); toast(`${r.icon} Logged ${fmt(v)} — relic found: ${r.name}!`); }
+    else if(sum && (sum.win||sum.lose)) toast(`Logged ${fmt(v)} · ${sum.win} patrols won (+${fmt(sum.loot)})`);
+    else toast(`Logged ${fmt(v)} steps`);
+  }
+  document.getElementById('logModal').classList.remove('show');
+});
+document.getElementById('autoOn').addEventListener('click',()=>{ S.autoRaid=true; save(true); renderPatrol(); toast('Patrols enabled'); });
+document.getElementById('autoOff').addEventListener('click',()=>{ S.autoRaid=false; save(true); renderPatrol(); toast('Patrols halted'); });
+document.getElementById('dogBtn').addEventListener('click', logDog);
+document.getElementById('dogRevealClose').addEventListener('click',()=>document.getElementById('dogModal').classList.remove('show'));
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(confirm('Disband the entire legion and erase all progress? This cannot be undone.')){
+    localStorage.removeItem(SAVE_KEY); S=freshState(); save(true); renderAll(); toast('A new legion is raised');
+  }
+});
+// close modals on backdrop tap
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m && m.id==='logModal') m.classList.remove('show'); }));
+
+window.addEventListener('visibilitychange',()=>{ if(document.hidden) save(true); });
+window.addEventListener('pagehide',()=>save(true));
+
+/* ---------- Boot ---------- */
+load();
+renderAll();
+setSensor('off');
+</script>
+</body>
+</html>
