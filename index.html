@@ -49,6 +49,7 @@
   .iconbtn:hover{background:var(--surface);border-color:var(--line)}
   .iconbtn.on{color:var(--violet)}
   body.guest #btnPlans{display:none}
+  body.guest #btnCloud{display:none}
 
   /* ---------- eyebrow / labels ---------- */
   .eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
@@ -223,6 +224,7 @@
       <span>Penciled<small>plans, lightly committed</small></span>
     </div>
     <span class="spacer"></span>
+    <button class="iconbtn" id="btnCloud" title="Sync" aria-label="Sync across devices">☁</button>
     <button class="iconbtn" id="btnPlans" title="My plans" aria-label="My plans">☰</button>
     <button class="iconbtn" id="btnSound" title="Sound" aria-label="Toggle sound">♪</button>
   </div>
@@ -257,6 +259,9 @@ const catBy = k => CATS.find(c=>c.k===k) || CATS[CATS.length-1];
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const DAYS_SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
+/* ===== PASTE YOUR WORKER URL HERE (no trailing slash). Leave "" to stay offline-only. ===== */
+const API_BASE = "";   // e.g. "https://penciled.workers.dev"
+
 const KEY = "penciled.v1";
 let DB = load();
 let SESSION = []; // accumulated responses in results mode
@@ -264,11 +269,11 @@ let SESSION = []; // accumulated responses in results mode
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw) return JSON.parse(raw);
+    if(raw){ const d=JSON.parse(raw); if(!d.auth) d.auth={}; return d; }
   }catch(e){}
-  return { plans:{}, currentId:null, prefs:{sound:true} };
+  return { plans:{}, currentId:null, prefs:{sound:true}, auth:{} };
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} syncAfterSave(); }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 function mondayOf(d){
@@ -353,6 +358,7 @@ function packResponse(planId, who, votes){
 function readHash(){
   const h = location.hash.replace(/^#/,"");
   if(h.startsWith("p=")) return {mode:"respond", data:h.slice(2)};
+  if(h.startsWith("v=")) return {mode:"cloudview", data:h.slice(2)};
   if(h.startsWith("r=")) return {mode:"results", data:h.slice(2)};
   return {mode:"edit"};
 }
@@ -683,6 +689,13 @@ function openShare(p){
       h("div",{class:"hint",style:"font-size:13px;color:var(--ink-soft)"},"Your guest opens the link, taps Yes / No / Maybe on each idea, and sends their answers back to you.")
     ]));
 
+    if(apiReady()){
+      const liveLink = location.origin + location.pathname + "#v=" + p.id;
+      inEl.appendChild(shareOpt("☁","Copy live link","Replies come straight back to you — nothing to paste", async()=>{ await pushPlanNow(p.id); copy(liveLink,"Live link copied"); }));
+      inEl.appendChild(shareOpt("💬","Text live link","Opens Messages with the live link", async()=>{ await pushPlanNow(p.id); window.location.href="sms:?&body="+encodeURIComponent((p.title||"Plans this week")+" — tap to vote:\n"+liveLink); }));
+      inEl.appendChild(h("div",{class:"hint",style:"margin:4px 2px 8px"},"With the live link, votes appear under this week automatically — no codes to paste. Options below still work offline."));
+    }
+
     inEl.appendChild(shareOpt("📥","Save as web page","A file you can text, email or AirDrop — opens for anyone, no hosting needed", ()=>exportStandalone(p)));
 
     // native share if available
@@ -723,11 +736,26 @@ function previewPlan(p){
 }
 
 /* ============================== RESPOND MODE ============================== */
-let RESP = { plan:null, votes:[], who:"" };
+let RESP = { plan:null, votes:[], who:"", cloud:false };
+
+async function renderCloudView(id){
+  const app=$("#app"); app.innerHTML="";
+  app.appendChild(h("div",{class:"empty"},[ h("div",{class:"big"},"☁"), h("div",{class:"et"},"Loading plan…") ]));
+  $("#actionbar").innerHTML="";
+  let plan;
+  try{ plan=await fetchGuestPlan(id); }catch(e){ return renderBroken(); }
+  if(!plan){ return renderBroken(); }
+  RESP.cloud=true; RESP.votes=[]; RESP.who="";
+  startRespond(plan);
+}
 
 function renderRespond(data){
   let plan;
   try{ plan = unpackPlan(dec(data)); }catch(e){ return renderBroken(); }
+  RESP.cloud = false;
+  startRespond(plan);
+}
+function startRespond(plan){
   RESP.plan = plan;
   RESP.votes = plan.activities.map((_,i)=> RESP.votes[i] || null);
 
@@ -806,6 +834,7 @@ function respondCard(a, gi){
 function sendAnswers(){
   const answered = RESP.votes.filter(v=>v&&v.c).length;
   if(!answered){ toast("Tap Yes, No or Maybe on at least one"); return; }
+  if(RESP.cloud){ return sendAnswersCloud(); }
   const payload = packResponse(RESP.plan.id, RESP.who.trim(), RESP.votes);
   const link = location.origin + location.pathname + "#r=" + enc(payload);
   const text = responseAsText(RESP.plan, RESP.who.trim(), RESP.votes);
@@ -832,6 +861,21 @@ function sendAnswers(){
     inEl.appendChild(box);
     if(location.protocol==="file:") inEl.appendChild(h("div",{class:"hint",style:"margin-top:10px"},
       "You're on a downloaded page, so this link won't open on its own — just copy it (or the plain text) and send it back. They'll paste it to see your picks."));
+  });
+}
+async function sendAnswersCloud(){
+  const payload = packResponse(RESP.plan.id, RESP.who.trim(), RESP.votes);
+  toast("Sending…");
+  try{ await api("/plan/"+RESP.plan.id+"/responses",{method:"POST",body:payload,auth:false}); }
+  catch(e){ toast("Couldn't send — check your connection"); return; }
+  chord();
+  openSheet(inEl=>{
+    inEl.appendChild(h("h2",{},"Sent ✓"));
+    inEl.appendChild(h("div",{class:"hint",style:"font-size:14.5px;color:var(--ink-soft);margin-top:6px"},
+      "Your picks went straight to the planner — no link to send back. You can close this page."));
+    inEl.appendChild(h("div",{class:"sheet-btns",style:"margin-top:18px"},[
+      h("button",{class:"btn btn-primary",onclick:closeSheet},"Done")
+    ]));
   });
 }
 function responseAsText(plan, who, votes){
@@ -991,6 +1035,7 @@ function renderBroken(){
 function openPlansSheet(){
   openSheet(inEl=>{
     inEl.appendChild(h("h2",{},"My weeks"));
+    if(API_BASE) inEl.appendChild(shareOpt("☁", apiReady()?"Synced — sync options":"Sync across devices", apiReady()?"Signed in · tap to manage":"Sign in with a code to sync", ()=>openSyncSheet()));
     inEl.appendChild(shareOpt("📨","Paste a reply you got","See someone's Yes / No / Maybe picks",()=>pasteReplyEntry()));
     const list=h("div",{class:"myplans"});
     const ids=Object.keys(DB.plans).sort((a,b)=> (DB.plans[b].updated||0)-(DB.plans[a].updated||0));
@@ -1007,7 +1052,7 @@ function openPlansSheet(){
       if(!cur) row.appendChild(h("button",{class:"smallbtn",onclick:()=>{ DB.currentId=id; save(); closeSheet(); location.hash=""; renderEdit(); }},"Open"));
       row.appendChild(h("button",{class:"smallbtn danger",onclick:()=>{
         if(Object.keys(DB.plans).length<=1){ toast("Keep at least one week"); return; }
-        delete DB.plans[id]; if(DB.currentId===id) DB.currentId=null; save(); openPlansSheet(); renderEdit();
+        deleteRemote(id); delete DB.plans[id]; if(DB.currentId===id) DB.currentId=null; save(); openPlansSheet(); renderEdit();
       }},"Delete"));
       list.appendChild(row);
     });
@@ -1085,24 +1130,146 @@ function ingestReply(v){
   closeSheet(); openResponsesFor(plan); chord(); return true;
 }
 
+/* ============================== cloud sync ============================== */
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+function apiReady(){ return !!API_BASE && !!(DB.auth && DB.auth.token); }
+function cleanPlan(p){ const {responses, ...rest}=p; return rest; } // never store responses inside the plan blob
+
+async function api(path,{method="GET",body,auth=true}={}){
+  const headers={};
+  if(body) headers["Content-Type"]="application/json";
+  if(auth && DB.auth && DB.auth.token) headers["Authorization"]="Bearer "+DB.auth.token;
+  const res=await fetch(API_BASE+path,{method,headers,body:body?JSON.stringify(body):undefined});
+  if(!res.ok){ const err=new Error("api_"+res.status); err.status=res.status; throw err; }
+  const ct=res.headers.get("content-type")||"";
+  return ct.includes("json")?res.json():res.text();
+}
+
+let _dirty=new Set(), _flushT=null;
+function syncAfterSave(){
+  if(apiReady() && DB.currentId && DB.plans[DB.currentId]){
+    _dirty.add(DB.currentId);
+    clearTimeout(_flushT); _flushT=setTimeout(flushDirty,1200);
+  }
+}
+async function flushDirty(){
+  if(!apiReady()) return;
+  const ids=[..._dirty]; _dirty.clear();
+  for(const id of ids){ const p=DB.plans[id]; if(!p) continue;
+    try{ await api("/plans/"+id,{method:"PUT",body:cleanPlan(p)}); }
+    catch(e){ if(e.status===401){ signedOut(); return; } _dirty.add(id); }
+  }
+}
+async function pushPlanNow(id){
+  const p=DB.plans[id]; if(!apiReady()||!p) return false;
+  try{ await api("/plans/"+id,{method:"PUT",body:cleanPlan(p)}); return true; }catch(e){ return false; }
+}
+async function deleteRemote(id){ if(!apiReady())return; try{ await api("/plans/"+id,{method:"DELETE"}); }catch(e){} }
+
+async function cloudLogin(code){
+  const r=await api("/auth/code",{method:"POST",body:{code},auth:false});
+  DB.auth={token:r.token}; saveLocal();
+  await cloudPull();
+}
+function signedOut(){ DB.auth={}; saveLocal(); updateSyncBadge(); }
+function cloudLogout(){ signedOut(); toast("Signed out — plans stay on this device"); }
+
+async function cloudPull(){
+  if(!apiReady()) return;
+  let data; try{ data=await api("/plans"); }catch(e){ if(e.status===401) signedOut(); return; }
+  (data.plans||[]).forEach(p=>{
+    if(!p||!p.id) return;
+    const local=DB.plans[p.id];
+    if(!p.responses) p.responses=(local&&local.responses)||[];
+    if(!local || (p.updated||0)>=(local.updated||0)) DB.plans[p.id]=p;
+  });
+  if(!DB.currentId){ const ids=Object.keys(DB.plans); if(ids.length) DB.currentId=ids[ids.length-1]; }
+  saveLocal();
+}
+
+async function refreshReplies(id){
+  if(!apiReady()||!id) return false;
+  let data; try{ data=await api("/plans/"+id+"/responses"); }catch(e){ return false; }
+  const p=DB.plans[id]; if(!p) return false;
+  const before=(p.responses||[]).length;
+  p.responses=data.responses||[]; saveLocal();
+  return p.responses.length!==before;
+}
+async function fetchGuestPlan(id){
+  const r=await api("/plan/"+id,{auth:false});
+  return r.plan;
+}
+
+function genCode(){ const w="abcdefghjkmnpqrstuvwxyz23456789"; let s=""; for(let i=0;i<20;i++){ s+=w[Math.floor(Math.random()*w.length)]; if(i%5===4&&i<19)s+="-"; } return s; }
+function updateSyncBadge(){
+  const b=$("#btnCloud"); if(!b) return;
+  if(!API_BASE){ b.style.display="none"; return; }
+  b.style.display="";
+  b.classList.toggle("on",apiReady());
+  b.title=apiReady()?"Synced — tap for options":"Sign in to sync";
+}
+function openSyncSheet(){
+  openSheet(inEl=>{
+    inEl.appendChild(h("h2",{},"Sync across devices"));
+    if(!API_BASE){
+      inEl.appendChild(h("div",{class:"hint",style:"margin-top:6px"},
+        "No server set yet. Paste your Worker URL into the API_BASE line near the top of this file to turn on sync."));
+      return;
+    }
+    if(apiReady()){
+      inEl.appendChild(h("div",{class:"hint",style:"font-size:14px;color:var(--ink-soft);margin-top:6px"},
+        "Signed in. Your plans sync automatically. Enter the same login code on another device to see them there, and shared “live links” collect replies for you."));
+      inEl.appendChild(h("div",{class:"sheet-btns",style:"margin-top:18px"},[
+        h("button",{class:"btn btn-ghost",style:"width:auto;flex:1",onclick:async()=>{ closeSheet(); toast("Syncing…"); await cloudPull(); render(); toast("Synced ✓"); }},"Pull latest"),
+        h("button",{class:"btn btn-primary",onclick:()=>{ cloudLogout(); closeSheet(); render(); }},"Sign out")
+      ]));
+      return;
+    }
+    inEl.appendChild(h("div",{class:"hint",style:"font-size:13.5px;color:var(--ink-soft);margin-top:4px"},
+      "Enter a login code, and use the SAME code on every device to sync your plans between them. Make it long and unique — anyone who has it can see your plans."));
+    const field=h("div",{class:"field"},[ h("label",{},"Login code") ]);
+    const inp=h("input",{type:"text",placeholder:"at least 8 characters",autocapitalize:"off",autocorrect:"off",spellcheck:"false"});
+    field.appendChild(inp);
+    field.appendChild(h("button",{class:"smallbtn",style:"padding:6px 0;margin-top:6px",onclick:()=>{ inp.value=genCode(); }},"✨ Generate a strong code"));
+    inEl.appendChild(field);
+    inEl.appendChild(h("div",{class:"sheet-btns"},[
+      h("button",{class:"btn btn-primary",onclick:async()=>{
+        const code=inp.value.trim(); if(code.length<8){ toast("At least 8 characters"); return; }
+        toast("Signing in…");
+        try{ await cloudLogin(code); }catch(e){ toast("Sign-in failed — check your code/URL"); return; }
+        closeSheet(); updateSyncBadge(); render(); toast("Synced ✓");
+      }},"Sign in & sync")
+    ]));
+    setTimeout(()=>inp.focus(),250);
+  });
+}
+
 /* ============================== boot ============================== */
 function render(){
   const r=readHash();
   if(window.__PENCILED_EMBED__ && r.mode==="edit"){
     document.body.classList.add("guest"); renderRespond(window.__PENCILED_EMBED__); syncSoundBtn(); return;
   }
+  if(r.mode==="cloudview"){ document.body.classList.add("guest"); renderCloudView(r.data); syncSoundBtn(); updateSyncBadge(); return; }
   if(r.mode==="respond"){ document.body.classList.add("guest"); renderRespond(r.data); }
   else if(r.mode==="results"){ renderResults(r.data); }
-  else renderEdit();
-  syncSoundBtn();
+  else {
+    renderEdit();
+    if(apiReady() && DB.currentId) refreshReplies(DB.currentId).then(changed=>{ if(changed && readHash().mode==="edit") renderEdit(); });
+  }
+  syncSoundBtn(); updateSyncBadge();
 }
 function syncSoundBtn(){ const b=$("#btnSound"); b.classList.toggle("on",!!DB.prefs.sound); b.textContent=DB.prefs.sound?"♪":"♪̶"; b.title=DB.prefs.sound?"Sound on":"Sound off"; }
 
 $("#btnSound").addEventListener("click",()=>{ DB.prefs.sound=!DB.prefs.sound; save(); syncSoundBtn(); if(DB.prefs.sound) blip(660,0.08,"triangle",0.14); });
 $("#btnPlans").addEventListener("click",openPlansSheet);
+$("#btnCloud").addEventListener("click",openSyncSheet);
 window.addEventListener("hashchange",render);
 
-render();
+(async function init(){
+  if(apiReady()){ try{ await cloudPull(); }catch(e){} }
+  render();
+})();
 </script>
 </body>
 </html>
