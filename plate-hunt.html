@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>PLATE HUNT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Saira+Condensed:wght@500;700;900&family=Familjen+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#16181d;
+    --asphalt2:#1f232b;
+    --line:#f7c948;        /* road line amber */
+    --sign:#1f7a4d;        /* highway sign green */
+    --sign-d:#155e3a;
+    --ink:#f3efe4;
+    --ink-dim:#9aa0a8;
+    --hot:#ff5a3c;
+    --good:#54d68a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Familjen Grotesk',sans-serif;
+    background:var(--asphalt);
+    color:var(--ink);
+    overflow:hidden;
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(90deg, transparent 0 60px, rgba(255,255,255,.015) 60px 62px),
+      radial-gradient(120% 80% at 50% -10%, #23272f 0%, #16181d 60%);
+  }
+  .wrap{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}
+  .screen{display:none;flex:1;flex-direction:column;min-height:0}
+  .screen.on{display:flex}
+
+  /* ---------- shared ---------- */
+  h1.brand{font-family:'Bungee',sans-serif;font-size:clamp(34px,11vw,52px);line-height:.95;letter-spacing:1px;text-align:center;margin-top:18px;color:var(--line);text-shadow:0 3px 0 #6b5410, 0 6px 16px rgba(0,0,0,.5)}
+  .brand small{display:block;font-family:'Familjen Grotesk';font-weight:700;font-size:13px;letter-spacing:5px;color:var(--ink-dim);text-shadow:none;margin-top:8px}
+  .roadline{height:8px;margin:16px 2px;border-radius:8px;background:repeating-linear-gradient(90deg,var(--line) 0 28px,transparent 28px 52px);opacity:.85}
+
+  label.fld{display:block;font-weight:700;letter-spacing:1px;font-size:12px;text-transform:uppercase;color:var(--ink-dim);margin:0 2px 7px}
+  .card{background:linear-gradient(180deg,var(--asphalt2),#191c22);border:1px solid #2c313b;border-radius:18px;padding:16px;margin-bottom:14px}
+  input[type=text]{width:100%;background:#0f1115;border:1px solid #343a45;color:var(--ink);font-family:'Familjen Grotesk';font-size:18px;font-weight:600;padding:14px 14px;border-radius:12px;outline:none}
+  input[type=text]:focus{border-color:var(--line)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{flex:1 1 auto;min-width:60px;text-align:center;background:#0f1115;border:1px solid #343a45;color:var(--ink-dim);padding:12px 6px;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer}
+  .chip.sel{background:var(--sign);border-color:var(--good);color:#fff}
+
+  .prow{display:flex;align-items:center;gap:10px;background:#0f1115;border:1px solid #343a45;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .dot{width:18px;height:18px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+  .prow .nm{flex:1;font-weight:700;font-size:18px}
+  .prow .say{font-size:12px;color:var(--ink-dim)}
+  .xbtn{background:none;border:none;color:var(--hot);font-size:22px;font-weight:900;cursor:pointer;padding:0 6px}
+
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:17px;font-family:'Saira Condensed';font-weight:900;letter-spacing:1.5px;font-size:21px;text-transform:uppercase;cursor:pointer}
+  .btn.go{background:var(--line);color:#241c00;box-shadow:0 5px 0 #9c7c12}
+  .btn.go:active{transform:translateY(3px);box-shadow:0 2px 0 #9c7c12}
+  .btn.ghost{background:transparent;color:var(--ink-dim);border:1px solid #343a45;box-shadow:none;font-size:16px;padding:13px}
+  .btn.add{background:var(--sign);color:#fff;box-shadow:0 5px 0 var(--sign-d)}
+  .btn.add:active{transform:translateY(3px);box-shadow:0 2px 0 var(--sign-d)}
+
+  .scrollpad{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding-bottom:8px}
+  .note{font-size:12.5px;color:var(--ink-dim);line-height:1.5;padding:2px 4px}
+
+  /* ---------- game ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px}
+  .target-tag{font-family:'Saira Condensed';font-weight:900;letter-spacing:1px;font-size:15px;text-transform:uppercase;color:var(--asphalt);background:var(--line);padding:5px 12px;border-radius:20px}
+  .mic{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--ink-dim);cursor:pointer;padding:6px 10px;border:1px solid #2c313b;border-radius:20px;user-select:none}
+  .mic:active{transform:scale(.96)}
+  .mic .led{width:11px;height:11px;border-radius:50%;background:#444;transition:background .2s}
+  .mic.live .led{background:var(--good);box-shadow:0 0 10px var(--good);animation:pulse 1.4s infinite}
+  .mic.off .led{background:var(--hot)}
+  @keyframes pulse{50%{opacity:.35}}
+
+  .clock{text-align:center;padding:6px 0 2px}
+  .clock .big{font-family:'Saira Condensed';font-weight:900;font-size:clamp(78px,26vw,128px);line-height:.9;letter-spacing:2px;font-variant-numeric:tabular-nums}
+  .clock.warn .big{color:var(--line)}
+  .clock.crit .big{color:var(--hot);animation:blink 1s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:.4}}
+  .bar{height:9px;background:#0f1115;border-radius:9px;overflow:hidden;margin:8px 8px 4px;border:1px solid #2c313b}
+  .bar i{display:block;height:100%;background:var(--sign);width:100%;transition:width .25s linear}
+
+  .players{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;padding:10px 2px}
+  .pcard{position:relative;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;border:2px solid transparent;overflow:hidden;background:var(--asphalt2);transition:transform .12s}
+  .pcard.lead{border-color:var(--line);box-shadow:0 0 24px rgba(247,201,72,.18)}
+  .pcard .accent{position:absolute;left:0;top:0;bottom:0;width:8px}
+  .pcard .pname{flex:1;min-width:0}
+  .pcard .pname b{font-size:21px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcard .pname span{font-size:11.5px;color:var(--ink-dim);letter-spacing:.5px}
+  .crown{font-size:15px}
+  .scoreNum{font-family:'Saira Condensed';font-weight:900;font-size:46px;line-height:1;min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+  .plus{flex:none;width:66px;height:66px;border-radius:50%;border:none;background:var(--sign);color:#fff;font-family:'Saira Condensed';font-weight:900;font-size:34px;cursor:pointer;box-shadow:0 4px 0 var(--sign-d)}
+  .plus:active{transform:translateY(3px);box-shadow:0 1px 0 var(--sign-d)}
+  .minus{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid #3a3f4a;background:#0f1115;color:var(--ink-dim);font-size:20px;font-weight:900;cursor:pointer}
+  .pop{animation:pop .35s}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+  .ctrls{display:flex;gap:10px;padding:8px 2px 6px}
+  .ctrls .btn{flex:1}
+
+  .dbl{display:none;margin-top:4px;font-family:'Saira Condensed';font-weight:900;letter-spacing:2px;font-size:15px;color:#241c00;background:var(--line);border-radius:20px;padding:3px 0;animation:flash 0.7s steps(2,start) infinite}
+  .clock.dbl-on .dbl{display:block}
+  @keyframes flash{50%{opacity:.45}}
+
+  #policeBanner{display:none;align-items:center;justify-content:center;gap:12px;background:linear-gradient(90deg,#c0142a,#1437c0);color:#fff;font-family:'Saira Condensed';font-weight:900;letter-spacing:2px;font-size:22px;text-transform:uppercase;padding:14px;border-radius:14px;margin:8px 2px;animation:cop .5s steps(2,start) infinite}
+  #policeBanner.on{display:flex}
+  #policeBanner .lights{font-size:24px}
+  @keyframes cop{50%{filter:hue-rotate(40deg) brightness(1.3)}}
+
+  .heard{font-size:12.5px;color:var(--ink-dim);text-align:center;padding:7px 10px;margin:2px 2px 0;min-height:30px;background:#0f1115;border:1px solid #2c313b;border-radius:10px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .heard.hot{color:var(--ink);font-style:normal}
+
+  #eventToast{display:none;text-align:center;font-family:'Saira Condensed';font-weight:900;letter-spacing:1.5px;font-size:19px;text-transform:uppercase;padding:11px;border-radius:14px;margin:8px 2px;color:#241c00}
+  #eventToast.on{display:block;animation:pop .4s}
+  #eventToast.bonus{background:linear-gradient(90deg,#54d68a,#2ec4b6)}
+  #eventToast.heli{background:linear-gradient(90deg,#5aa9ff,#c77dff);color:#fff}
+
+  .hallrow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #262b34}
+  .hallrow:last-child{border-bottom:none}
+  .hallrow .hn{flex:1;font-weight:700}
+  .hallrow .hv{font-family:'Saira Condensed';font-weight:900;font-size:22px;color:var(--line)}
+  .hallrow .medal{font-size:18px;width:24px;text-align:center}
+
+  /* ---------- end ---------- */
+  .winner{text-align:center;padding:18px 0 4px}
+  .winner .crwn{font-size:46px}
+  .winner h2{font-family:'Bungee';font-size:clamp(30px,9vw,46px);color:var(--line);margin:6px 0;text-shadow:0 3px 0 #6b5410}
+  .winner p{color:var(--ink-dim);font-weight:600;letter-spacing:1px}
+  .standing{display:flex;align-items:center;gap:12px;background:var(--asphalt2);border:1px solid #2c313b;border-radius:14px;padding:13px 15px;margin-bottom:9px}
+  .standing .rk{font-family:'Saira Condensed';font-weight:900;font-size:26px;width:34px;color:var(--ink-dim)}
+  .standing .sn{flex:1;font-weight:700;font-size:19px}
+  .standing .sv{font-family:'Saira Condensed';font-weight:900;font-size:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= SETUP ================= -->
+  <section id="setup" class="screen on">
+    <div class="scrollpad">
+      <h1 class="brand">PLATE<br>HUNT<small>SPOT IT · CALL IT · SCORE IT</small></h1>
+      <div class="roadline"></div>
+
+      <div class="card">
+        <label class="fld">What are we hunting?</label>
+        <input type="text" id="targetInput" value="Toyota" autocomplete="off" spellcheck="false">
+        <div class="chips" style="margin-top:10px" id="targetChips">
+          <div class="chip">Toyota</div>
+          <div class="chip">Red car</div>
+          <div class="chip">Pickup truck</div>
+          <div class="chip">VW Bug</div>
+          <div class="chip">Out-of-state plate</div>
+          <div class="chip">Tesla</div>
+          <div class="chip">Motorcycle</div>
+          <div class="chip">School bus</div>
+          <div class="chip">Black SUV</div>
+          <div class="chip">Convertible</div>
+          <div class="chip">RV or camper</div>
+          <div class="chip">Vanity plate</div>
+          <div class="chip">Cop car</div>
+          <div class="chip">Yellow car</div>
+          <div class="chip">Dealer plate</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="fld">Players — say the name out loud to score</label>
+        <div id="playerList"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input type="text" id="playerInput" placeholder="Add a name…" autocomplete="off" spellcheck="false">
+          <button class="btn add" style="width:96px" id="addBtn">Add</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="fld">Round length</label>
+        <div class="chips" id="durChips">
+          <div class="chip" data-sec="120">2 min</div>
+          <div class="chip sel" data-sec="300">5 min</div>
+          <div class="chip" data-sec="600">10 min</div>
+          <div class="chip" data-sec="900">15 min</div>
+          <div class="chip" data-sec="1800">30 min</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="fld">Mic sensitivity</label>
+        <div class="chips" id="sensChips">
+          <div class="chip sel" data-sens="strict">Strict (fewer mistakes)</div>
+          <div class="chip" data-sens="loose">Loose (catches more)</div>
+        </div>
+      </div>
+
+      <div class="card" id="hallCard" style="display:none">
+        <label class="fld">🏆 Hall of Wins</label>
+        <div id="hallList"></div>
+        <button class="btn ghost" id="resetWinsBtn" style="margin-top:8px">Reset Scoreboard</button>
+      </div>
+
+      <button class="btn go" id="startBtn">Start the Hunt</button>
+      <p class="note" style="margin:12px 2px 18px">Spot the target, shout the player's name, and it scores automatically. Watch for surprises: a <b>bonus window</b>, a <b>helicopter</b> swapping the target, and a <b>police stop</b> that freezes scoring. The final stretch pays double or triple. Big <b>+</b> buttons are the backup. Voice works best in Chrome on Android; some iPhones are tap-only.</p>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section id="game" class="screen">
+    <div class="topbar">
+      <span class="target-tag" id="targetTag">TOYOTA</span>
+      <span class="mic" id="micStat"><span class="led"></span><span id="micTxt">listening</span></span>
+    </div>
+
+    <div class="clock" id="clock">
+      <div class="big" id="clockBig">5:00</div>
+      <div class="dbl" id="dblFlag">⚡ DOUBLE POINTS ⚡</div>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+
+    <div id="eventToast"></div>
+    <div id="policeBanner"><span class="lights">🚨</span><span id="policeTxt">POLICE — FREEZE!</span><span class="lights">🚨</span></div>
+
+    <div class="players" id="playersGame"></div>
+
+    <div class="heard" id="heardLine">say a player's name to score…</div>
+
+    <div class="ctrls">
+      <button class="btn ghost" id="pauseBtn">Pause</button>
+      <button class="btn ghost" id="endBtn">End Round</button>
+    </div>
+  </section>
+
+  <!-- ================= END ================= -->
+  <section id="end" class="screen">
+    <div class="scrollpad">
+      <div class="winner">
+        <div class="crwn">🏁</div>
+        <h2 id="winName">—</h2>
+        <p id="winSub">FINAL STANDINGS</p>
+        <div id="streakBanner" style="display:none;font-family:'Saira Condensed';font-weight:900;letter-spacing:1.5px;color:#241c00;background:var(--line);border-radius:20px;padding:7px 14px;margin:10px auto 0;max-width:260px"></div>
+      </div>
+      <div class="roadline"></div>
+      <div id="standings"></div>
+      <button class="btn go" id="againBtn" style="margin-top:6px">Rematch</button>
+      <button class="btn ghost" id="newBtn" style="margin-top:10px;margin-bottom:18px">New Setup</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+(function(){
+  /* ---------------- state ---------------- */
+  var PALETTE = ["#f7c948","#54d68a","#5aa9ff","#ff5a3c","#c77dff","#ff9f1c","#2ec4b6","#ff5d8f"];
+  var SUGGEST = ["Ace","Blue","Echo","Fox","Jet","Max","Nova","Rex","Sky","Zip"];
+  var HELI_POOL = ["red car","blue car","pickup truck","white car","SUV","motorcycle","Tesla","yellow car","black car","minivan","Jeep","convertible","out-of-state plate","delivery van"];
+
+  // short, spoken-friendly facts per target keyword
+  var FACTS = {
+    toyota: ["Toyota is the world's largest automaker by units sold.","The Toyota Corolla is the best-selling car of all time.","Toyota was originally spelled Toyoda, after the founding family.","The Hilux is famous for being nearly indestructible."],
+    tesla: ["Tesla's first car, the Roadster, was based on a Lotus Elise.","A Tesla Roadster is currently floating through space.","Teslas can update themselves overnight like a phone.","Tesla was named after inventor Nikola Tesla."],
+    truck: ["The Ford F-Series has been America's best-selling truck for decades.","Pickup beds were first added to Model T cars by farmers.","The word truck may come from the Greek 'trochos', meaning wheel."],
+    pickup: ["The Ford F-Series has been America's best-selling vehicle for over forty years.","Pickup trucks outsell sedans across much of the U.S."],
+    bug: ["The VW Beetle was designed in the 1930s and built into the 2000s.","Over 21 million original Beetles were produced.","The Beetle's engine sits in the back, not the front."],
+    motorcycle: ["The first motorcycle was built in 1885 with a wooden frame.","Harley-Davidson started in a tiny shed in 1903.","Motorcycles can get over 100 miles per gallon."],
+    bus: ["A school bus is yellow because that color catches your eye fastest in dim light.","That exact shade is officially called school bus yellow.","School buses are among the safest vehicles on the road."],
+    suv: ["SUV stands for sport utility vehicle.","SUVs now outsell traditional sedans in the U.S.","The Jeep Wagoneer was one of the first luxury SUVs."],
+    convertible: ["Early cars were basically all convertibles, with roofs added later.","The first power-folding hardtop appeared in 1957."],
+    rv: ["The first motorhomes appeared in the early 1900s.","Some luxury RVs cost more than a house."],
+    camper: ["The first motorhomes appeared in the early 1900s.","Some luxury RVs cost more than a house."],
+    plate: ["The first license plates were made of leather and porcelain.","New Hampshire plates still say Live Free or Die.","Vanity plates get rejected if they spell anything offensive."],
+    cop: ["Police cars are often called cruisers or patrol units.","The Ford Crown Victoria was the classic American cop car for decades."],
+    red: ["Red is one of the most popular car colors worldwide.","The idea that red cars get more tickets is actually a myth."],
+    yellow: ["Yellow cars hold their value well because they're rare.","Yellow is one of the rarest car colors on the road."],
+    generic: ["There are over a billion cars on Earth.","The average car has around thirty thousand parts.","The first speeding ticket was issued back in 1896.","Traffic lights existed before cars, originally for horse carriages."]
+  };
+  function factsFor(target){
+    var t = (target||"").toLowerCase();
+    var keys = Object.keys(FACTS);
+    for(var i=0;i<keys.length;i++){ if(keys[i]!=="generic" && t.indexOf(keys[i])!==-1){ return FACTS[keys[i]].slice(); } }
+    return FACTS.generic.slice();
+  }
+
+  var CHEER = ["{L} is on a tear!","Big lead for {L}!","{L} can't be stopped right now!","Eyes sharp, {L} is cleaning up!","{L} is dialed in!"];
+  var TEASE = ["Come on {T}, they're getting away from you!","{T}, you're asleep back there!","{T} needs to wake up and look out the window!","Somebody help {T} out!","{T} is getting smoked right now!"];
+  var NEUTRAL = ["It's anyone's game out there!","Tight race, keep those eyes peeled!","Lots of road left, stay sharp!","The next one could change everything!","Heads up, scan both sides of the road!"];
+  var state = {
+    target: "Toyota",
+    players: [],            // {id,name,key,color,score}
+    durationSec: 300,
+    endTime: 0,
+    running: false,
+    paused: false,
+    pausedRemain: 0,
+    leaderId: null,
+    sensitivity: "strict",
+    frozen: false,
+    freezeMs: 0,
+    policeRem: -1,
+    policeFired: false,
+    lastMinMult: 2,
+    lastMinOn: false,
+    bonusOn: false,
+    bonusRem: -1,
+    bonusEndMs: 0,
+    heliRem: -1,
+    heliFired: false,
+    factRem: 0,
+    nextCommentaryRem: 0,
+    facts: [],
+    factIdx: 0
+  };
+  var streak = { name:null, count:0 };
+  try { var sv = JSON.parse(localStorage.getItem("plateHuntStreak")||"null"); if(sv){ streak = sv; } } catch(e){}
+  var wins = {};
+  try { var wv = JSON.parse(localStorage.getItem("plateHuntWins")||"null"); if(wv){ wins = wv; } } catch(e){}
+  var idc = 1;
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem("plateHunt")||"null"); } catch(e){}
+  if(saved){
+    if(saved.target) state.target = saved.target;
+    if(saved.durationSec) state.durationSec = saved.durationSec;
+    if(Array.isArray(saved.players)) state.players = saved.players.map(function(p){
+      idc = Math.max(idc, (p.id||0)+1);
+      return {id:p.id||idc++, name:p.name, key:(p.name||"").toLowerCase().trim(), color:p.color, score:0};
+    });
+  }
+  if(state.players.length===0){
+    addPlayer("Player 1"); addPlayer("Player 2");
+  }
+  state.chosenTarget = state.target;
+  function persist(){
+    try{ localStorage.setItem("plateHunt", JSON.stringify({
+      target: state.chosenTarget || state.target, durationSec: state.durationSec,
+      players: state.players.map(function(p){return {id:p.id,name:p.name,color:p.color};})
+    })); }catch(e){}
+  }
+
+  /* ---------------- dom helpers ---------------- */
+  function $(id){ return document.getElementById(id); }
+  function show(id){
+    ["setup","game","end"].forEach(function(s){ $(s).classList.toggle("on", s===id); });
+  }
+
+  /* ---------------- audio: sfx + speech ---------------- */
+  var actx = null;
+  function audioBeep(freq, dur, type, vol){
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==="suspended") actx.resume();
+      var o=actx.createOscillator(), g=actx.createGain();
+      o.type=type||"sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol||0.25, actx.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+(dur||0.15));
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime+(dur||0.15));
+    }catch(e){}
+  }
+  function scoreChime(){ audioBeep(660,0.09,"square",0.22); setTimeout(function(){audioBeep(990,0.12,"square",0.22);},80); }
+  function tickBeep(){ audioBeep(880,0.07,"triangle",0.18); }
+  function endHorn(){ audioBeep(330,0.4,"sawtooth",0.25); setTimeout(function(){audioBeep(247,0.6,"sawtooth",0.25);},250); }
+  function sirenWhoop(){ audioBeep(720,0.26,"sawtooth",0.26); setTimeout(function(){ audioBeep(480,0.26,"sawtooth",0.26); },220); }
+  var sirenTimer = null;
+  function startSiren(){ if(sirenTimer) return; sirenWhoop(); sirenTimer = setInterval(sirenWhoop, 520); }
+  function stopSiren(){ if(sirenTimer){ clearInterval(sirenTimer); sirenTimer=null; } }
+  function chopper(){
+    for(var i=0;i<10;i++){ (function(k){ setTimeout(function(){ audioBeep(90,0.07,"square",0.22); },k*90); })(i); }
+  }
+  function factChime(){ audioBeep(880,0.09,"sine",0.16); setTimeout(function(){audioBeep(660,0.1,"sine",0.16);},90); }
+
+  /* speech synthesis with its own queue; mic stays LIVE while talking */
+  var speakQ = [], speaking = false, voice = null;
+  var spokenGuard = [];   // {text, until} — ignore mic hits that echo our own speech
+  function pickVoice(){
+    if(!("speechSynthesis" in window)) return;
+    var vs = speechSynthesis.getVoices();
+    if(!vs.length) return;
+    voice = vs.filter(function(v){return /en[-_]/i.test(v.lang);}).sort(function(a,b){
+      var pref=/Google|Samantha|Daniel|Karen|Natural/i;
+      return (pref.test(b.name)?1:0)-(pref.test(a.name)?1:0);
+    })[0] || vs[0];
+  }
+  if("speechSynthesis" in window){ speechSynthesis.onvoiceschanged = pickVoice; pickVoice(); }
+
+  function say(text){
+    speakQ.push(text);
+    // guard window: while we're speaking this, the mic may hear it — don't let it score
+    var words = text.split(/\s+/).length;
+    spokenGuard.push({ text: normalize(text), until: Date.now() + 900 + words*420 });
+    spokenGuard = spokenGuard.filter(function(g){ return g.until > Date.now()-500; });
+    drainSay();
+  }
+  function isEcho(normT){
+    var now = Date.now();
+    for(var i=0;i<spokenGuard.length;i++){
+      var g = spokenGuard[i];
+      if(g.until < now) continue;
+      // if the heard phrase is contained in something we just said, treat as echo
+      if(g.text.indexOf(normT) !== -1 || normT.indexOf(g.text) !== -1) return true;
+    }
+    return false;
+  }
+  function drainSay(){
+    if(!("speechSynthesis" in window)){ return; }
+    if(speaking) return;
+    if(speakQ.length===0){ return; }
+    var text = speakQ.shift();
+    speaking = true;
+    /* NOTE: recognition intentionally NOT stopped — mic stays live so spots
+       called mid-announcement still count. Self-echo is filtered via isEcho(). */
+    var u = new SpeechSynthesisUtterance(text);
+    if(voice) u.voice = voice;
+    u.rate = 1.08; u.pitch = 1.0; u.volume = 1.0;
+    u.onend = function(){ speaking=false; setTimeout(drainSay, 40); };
+    u.onerror = function(){ speaking=false; setTimeout(drainSay, 40); };
+    try{ speechSynthesis.speak(u); }catch(e){ speaking=false; setTimeout(drainSay,40); }
+  }
+
+  /* ---------------- speech recognition ---------------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recog = null, recogActive = false, wantRecog = false, recogSupported = !!SR;
+  var lastScoreAt = {};   // playerId -> ts, debounce voice double-fire
+
+  function buildRecog(){
+    if(!SR) return;
+    recog = new SR();
+    recog.continuous = true;
+    recog.interimResults = false;
+    recog.lang = "en-US";
+    recog.interimResults = true;
+    recog.onresult = function(e){
+      var interim = "";
+      for(var i=e.resultIndex;i<e.results.length;i++){
+        var alt = e.results[i][0];
+        var t = (alt.transcript||"");
+        if(e.results[i].isFinal){ showHeard(t, true); handleHeard(t.toLowerCase(), alt.confidence); }
+        else { interim += t; }
+      }
+      if(interim) showHeard(interim, false);
+    };
+    recog.onerror = function(e){
+      recogActive = false;
+      if(e && (e.error==="not-allowed" || e.error==="service-not-allowed")){
+        wantRecog = false; setMic(false, "no mic");
+      }
+    };
+    recog.onend = function(){
+      recogActive = false;
+      if(wantRecog){ setTimeout(startRecog, 250); }  // restart even while talking
+    };
+  }
+  function startRecog(){
+    if(!recog || recogActive || !wantRecog) return;
+    try{ recog.start(); recogActive = true; setMic(true,"listening"); }
+    catch(e){ recogActive = false; }
+  }
+  function stopRecog(){
+    if(recog && recogActive){ try{ recog.stop(); }catch(e){} }
+    recogActive = false;
+  }
+  function setMic(live, txt){
+    var m = $("micStat");
+    m.classList.toggle("live", !!live);
+    m.classList.toggle("off", !live);
+    $("micTxt").textContent = txt;
+  }
+  // Tap the LED to (re-)request mic permission and restart recognition
+  function retryMic(){
+    if(!recogSupported){
+      setMic(false,"tap to score");
+      say("Voice isn't supported on this browser. Use the plus buttons.");
+      return;
+    }
+    if(!state.running || state.paused) return;
+
+    // Context checks — these explain "set to ask but never prompts" cases.
+    if(window.self !== window.top){
+      setMic(false,"open in browser");
+      say("The mic is blocked inside this preview window. Download the file and open it in Chrome.");
+      return;
+    }
+    if(!window.isSecureContext){
+      setMic(false,"needs https");
+      say("Voice needs a secure page. Opening the file directly blocks the mic. Host it over https, or use the buttons.");
+      return;
+    }
+
+    setMic(false,"asking…");
+    var afterGrant = function(){
+      wantRecog = true;
+      if(!recog) buildRecog();
+      stopRecog();
+      setTimeout(startRecog, 200);
+    };
+    // getUserMedia surfaces the browser permission prompt explicitly
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        stream.getTracks().forEach(function(t){ t.stop(); });  // release; recognition opens its own
+        afterGrant();
+      }).catch(function(err){
+        var name = (err && err.name) || "";
+        var msg = "blocked", spoke = "Microphone is blocked. Allow it in your browser site settings, then tap again.";
+        if(name==="NotFoundError" || name==="DevicesNotFoundError"){ msg="no mic found"; spoke="No microphone was found on this device."; }
+        else if(name==="NotReadableError" || name==="TrackStartError"){ msg="mic in use"; spoke="The mic is being used by another app. Close it and tap again."; }
+        else if(name==="SecurityError"){ msg="needs https"; spoke="This page isn't secure enough for the mic. It needs to be served over https."; }
+        setMic(false, msg);
+        say(spoke);
+      });
+    } else {
+      setMic(false,"needs https");
+      say("This browser won't give microphone access here. The page needs to be served over https.");
+    }
+  }
+
+  var NUMWORDS = {zero:"0",one:"1",two:"2",three:"3",four:"4",five:"5",six:"6",seven:"7",eight:"8",nine:"9",ten:"10",eleven:"11",twelve:"12",thirteen:"13",fourteen:"14",fifteen:"15",sixteen:"16",seventeen:"17",eighteen:"18",nineteen:"19",twenty:"20"};
+  function normalize(s){
+    s = (s||"").toLowerCase().replace(/[^a-z0-9\s]/g," ");
+    var out = s.split(/\s+/).map(function(w){ return NUMWORDS[w] || w; });
+    return out.join(" ").replace(/\s+/g," ").trim();
+  }
+  function showHeard(text, isFinal){
+    var el = $("heardLine"); if(!el) return;
+    el.textContent = (isFinal ? "heard: " : "… ") + text;
+    el.classList.toggle("hot", !!isFinal);
+  }
+  var toastTimer = null;
+  function showToast(text, kind, ms){
+    var el = $("eventToast"); if(!el) return;
+    el.textContent = text;
+    el.className = "on " + (kind||"");
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.className = el.className.replace("on","").trim(); }, ms||4500);
+  }
+
+  // A player qualifies if EVERY token of their name is heard. Among qualifiers,
+  // only the most specific (most tokens) score, so "John" doesn't also score "Big John".
+  function handleHeard(raw, conf){
+    if(!state.running || state.paused) return;
+    if(state.frozen) return;                 // police stop — no scoring
+    var t = normalize(raw);
+    if(!t) return;
+    if(isEcho(t)) return;                     // ignore our own TTS bleeding into the mic
+
+    var strict = (state.sensitivity === "strict");
+    var heardWords = t.split(" ").filter(Boolean);
+    // Strict mode: reject long sentences (casual chatter) and low-confidence guesses.
+    if(strict){
+      if(heardWords.length > 4) return;                       // a call-out is short
+      if(typeof conf === "number" && conf > 0 && conf < 0.55) return;
+    } else {
+      if(heardWords.length > 9) return;
+    }
+
+    var words = (" "+t+" ");
+    var qualifiers = [];
+    state.players.forEach(function(p){
+      var toks = normalize(p.name).split(" ").filter(Boolean);
+      if(!toks.length) return;
+      var all = toks.every(function(tok){
+        if(strict && tok.length < 2) return false;            // ignore 1-char tokens in strict
+        return words.indexOf(" "+tok+" ") !== -1;
+      });
+      if(all) qualifiers.push({p:p, n:toks.length});
+    });
+    if(!qualifiers.length) return;
+    var maxN = qualifiers.reduce(function(m,q){ return Math.max(m,q.n); }, 0);
+    var now = Date.now();
+    var debounce = strict ? 2600 : 1700;
+    qualifiers.filter(function(q){ return q.n===maxN; }).forEach(function(q){
+      if(now - (lastScoreAt[q.p.id]||0) < debounce) return;   // debounce repeats
+      lastScoreAt[q.p.id] = now;
+      scorePoint(q.p, true);
+    });
+  }
+  function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+
+  /* ---------------- scoring ---------------- */
+  var hotTimes = {};   // playerId -> [timestamps] for streak detection
+  var MULTWORD = {2:"double",3:"triple"};
+  function currentMult(){
+    var m = 1;
+    if(state.lastMinOn) m = Math.max(m, state.lastMinMult);
+    if(state.bonusOn) m = Math.max(m, 2);
+    return m;
+  }
+  function scorePoint(p, fromVoice){
+    var pts = currentMult();
+    p.score += pts;
+    scoreChime();
+    if(pts>=2){ setTimeout(function(){ audioBeep(1180,0.12,"square",0.22); },150); }
+    if(pts>=3){ setTimeout(function(){ audioBeep(1480,0.12,"square",0.22); },300); }
+    flashCard(p.id);
+    var newLeader = computeLeader();
+    var tookLead = newLeader && newLeader.id===p.id && state.leaderId!==p.id && p.score>0;
+    state.leaderId = newLeader ? newLeader.id : null;
+    renderGame();
+
+    // hot streak: 3 spots within 14s
+    var now = Date.now();
+    var arr = (hotTimes[p.id] = (hotTimes[p.id]||[]).filter(function(ts){return now-ts<14000;}));
+    arr.push(now);
+    var onFire = arr.length>=3 && (now-(p.fireAt||0)>10000);
+
+    var mw = MULTWORD[pts];
+    if(tookLead && countLeadCompetitors()>1){
+      say(p.name + (mw?(" "+mw+"s up and takes the lead, "):" takes the lead, ") + p.score);
+    } else if(mw){
+      say(p.name + ", " + mw + "! " + p.score);
+    } else {
+      say(p.name + ", " + p.score);
+    }
+    if(onFire){ p.fireAt = now; say(p.name + " is on fire!"); }
+  }
+  function unscore(p){
+    if(p.score>0){ p.score--; }
+    state.leaderId = (computeLeader()||{}).id || null;
+    audioBeep(300,0.1,"sine",0.15);
+    renderGame();
+  }
+  function computeLeader(){
+    var top=null;
+    state.players.forEach(function(p){ if(!top || p.score>top.score) top=p; });
+    if(!top || top.score===0) return null;
+    // sole leader only
+    var tie = state.players.filter(function(p){return p.score===top.score;}).length>1;
+    return tie ? null : top;
+  }
+  function countLeadCompetitors(){
+    var withScore = state.players.filter(function(p){return p.score>0;});
+    return withScore.length;
+  }
+  function flashCard(id){
+    var el = document.querySelector('.pcard[data-pid="'+id+'"]');
+    if(el){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  }
+
+  /* ---------------- timer ---------------- */
+  var timer = null, lastSec = -1, lastNow = 0;
+  function randIn(lo, hi){ return (hi>lo) ? (lo + Math.floor(Math.random()*(hi-lo))) : -1; }
+  function startRound(){
+    state.target = state.chosenTarget || state.target;   // undo any prior helicopter swap
+    state.players.forEach(function(p){ p.score=0; p.fireAt=0; });
+    state.leaderId = null;
+    lastScoreAt = {}; hotTimes = {};
+    state.running = true; state.paused = false;
+    state.frozen = false; state.freezeMs = 0; state.policeFired = false;
+    state.lastMinOn = false; state.bonusOn = false; state.heliFired = false;
+    state.lastMinMult = (Math.random()<0.5) ? 2 : 3;            // final stretch pays 2x or 3x
+    state.endTime = Date.now() + state.durationSec*1000;
+    lastSec = state.durationSec + 1;
+    lastNow = 0;
+    var dur = state.durationSec;
+    // schedule events at distinct points (rem = seconds remaining), all clear of the final minute
+    state.policeRem = randIn(Math.max(20, Math.round(dur*0.30)), dur-75);
+    state.bonusRem  = randIn(Math.max(30, Math.round(dur*0.45)), dur-90);
+    state.heliRem   = randIn(Math.max(25, Math.round(dur*0.20)), dur-80);
+    state.factRem   = dur - Math.max(20, Math.round(dur*0.15));
+    state.nextCommentaryRem = dur - Math.max(25, Math.round(dur*0.20));
+    // facts for this target
+    state.facts = factsFor(state.target); state.factIdx = 0; shuffle(state.facts);
+    $("targetTag").textContent = state.target.toUpperCase();
+    $("policeBanner").classList.remove("on");
+    $("clock").classList.remove("dbl-on");
+    $("eventToast").className = "";
+    showHeard("say a player's name to score…", false);
+    renderGame();
+    show("game");
+    audioBeep(520,0.05,"sine",0.12);   // unlock audio on the start gesture
+    say("Hunting " + state.target + "s. Ready. Go!");
+    wantRecog = recogSupported;
+    if(recogSupported){ buildRecog(); startRecog(); }
+    else { setMic(false,"tap to score"); }
+    timer = setInterval(tick, 200);
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } }
+
+  function tick(){
+    if(!state.running || state.paused) return;
+    var now = Date.now();
+    var dt = lastNow ? (now - lastNow) : 0;
+    lastNow = now;
+
+    var rem = Math.max(0, Math.ceil((state.endTime - now)/1000));
+
+    // police freeze: clock KEEPS running; scoring blocked; siren loops the whole time
+    if(state.frozen){
+      state.freezeMs -= dt;
+      var fl = Math.max(0, Math.ceil(state.freezeMs/1000));
+      $("policeTxt").textContent = "POLICE — FREEZE! " + fl;
+      if(state.freezeMs <= 0) endFreeze();
+    } else if(!state.policeFired && state.policeRem>0 && rem<=state.policeRem){
+      startFreeze();
+    }
+
+    // bonus 2x window (30s) — only outside the final minute and not during freeze
+    if(!state.bonusOn && !state.frozen && state.bonusRem>0 && rem<=state.bonusRem && rem>65){
+      startBonus();
+    }
+    if(state.bonusOn){
+      state.bonusEndMs -= dt;
+      if(state.bonusEndMs<=0) endBonus();
+    }
+
+    // helicopter target swap
+    if(!state.heliFired && !state.frozen && state.heliRem>0 && rem<=state.heliRem){
+      helicopter();
+    }
+
+    // last-minute multiplier (2x or 3x)
+    if(!state.lastMinOn && rem<=60 && rem>0){
+      state.lastMinOn = true;
+      $("dblFlag").textContent = (state.lastMinMult===3 ? "⚡ TRIPLE POINTS ⚡" : "⚡ DOUBLE POINTS ⚡");
+      $("clock").classList.add("dbl-on");
+      say("Last minute! Every spot is worth " + (state.lastMinMult===3?"triple":"double") + "!");
+    }
+
+    if(rem !== lastSec){
+      for(var s=lastSec-1; s>=rem; s--){ announceSecond(s); }
+      lastSec = rem;
+      paintClock(rem);
+      maybeFact(rem);
+      maybeCommentary(rem);
+    }
+    if(rem<=0){ finishRound(); }
+  }
+
+  function startFreeze(){
+    state.policeFired = true;
+    state.frozen = true;
+    state.freezeMs = (10 + Math.floor(Math.random()*11)) * 1000;   // 10–20s
+    $("policeBanner").classList.add("on");
+    $("policeTxt").textContent = "POLICE — FREEZE! " + Math.round(state.freezeMs/1000);
+    startSiren();
+    say("Police ahead! Everybody freeze. No scoring while the siren is going!");
+  }
+  function endFreeze(){
+    state.frozen = false;
+    stopSiren();
+    $("policeBanner").classList.remove("on");
+    audioBeep(880,0.1,"square",0.2); setTimeout(function(){audioBeep(1180,0.14,"square",0.2);},120);
+    say("All clear. Back to the hunt!");
+  }
+  function startBonus(){
+    state.bonusOn = true;
+    state.bonusEndMs = 30000;
+    showToast("⭐ BONUS — DOUBLE POINTS (30s) ⭐", "bonus", 4000);
+    factChime();
+    say("Bonus round! Double points for the next thirty seconds. Go go go!");
+  }
+  function endBonus(){
+    state.bonusOn = false;
+    if(!state.lastMinOn) say("Bonus over. Back to single points.");
+  }
+  function helicopter(){
+    state.heliFired = true;
+    var pool = HELI_POOL.filter(function(x){ return x.toLowerCase() !== state.target.toLowerCase(); });
+    var pick = pool[Math.floor(Math.random()*pool.length)];
+    state.target = pick;
+    state.facts = factsFor(pick); state.factIdx = 0; shuffle(state.facts);  // facts follow new target
+    $("targetTag").textContent = pick.toUpperCase();
+    showToast("🚁 HELICOPTER — NEW TARGET: " + pick.toUpperCase(), "heli", 5000);
+    chopper();
+    say("Helicopter incoming! It's dropping a new target. Forget the old one — now you're hunting " + pick + "!");
+  }
+  function maybeFact(rem){
+    if(rem<=25 || state.frozen || !state.facts.length) return;
+    if(rem > state.factRem) return;
+    state.factRem = rem - (28 + Math.floor(Math.random()*22));   // a fact every ~28–50s
+    var f = state.facts[state.factIdx % state.facts.length]; state.factIdx++;
+    factChime();
+    say("Fun fact: " + f);
+  }
+  function maybeCommentary(rem){
+    if(rem<=20 || state.frozen) return;          // stay quiet in the final countdown
+    if(rem > state.nextCommentaryRem) return;
+    state.nextCommentaryRem = rem - (20 + Math.floor(Math.random()*16));  // next in ~20-36s
+    var sorted = state.players.slice().sort(function(a,b){return b.score-a.score;});
+    var top = sorted[0], low = sorted[sorted.length-1];
+    var line;
+    var roll = Math.random();
+    if(top && top.score>0 && roll<0.45){
+      line = pick(CHEER).replace(/\{L\}/g, top.name);
+    } else if(low && low.score < (top?top.score:0) && state.players.length>1 && roll<0.8){
+      line = pick(TEASE).replace(/\{T\}/g, low.name);
+    } else {
+      line = pick(NEUTRAL);
+    }
+    say(line);
+  }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function announceSecond(s){
+    if(s<=0) return;
+    if(s<=10){ tickBeep(); say(String(s)); return; }
+    if(s===30){ say("Thirty seconds left"); return; }
+    if(s>=60 && s%60===0){
+      var m = s/60;
+      say(m + (m>1?" minutes":" minute") + " left");
+      var ld = computeLeader();
+      if(ld){ say(ld.name + " leads with " + ld.score); }
+      else if(countLeadCompetitors()>0){ say("It's all tied up"); }
+    }
+  }
+  function fmt(sec){
+    var m=Math.floor(sec/60), s=sec%60;
+    return m+":"+(s<10?"0":"")+s;
+  }
+  function paintClock(rem){
+    $("clockBig").textContent = fmt(rem);
+    var c=$("clock");
+    c.classList.toggle("warn", rem<=60 && rem>10);
+    c.classList.toggle("crit", rem<=10);
+    var pct = Math.max(0, Math.min(100, (rem/state.durationSec)*100));
+    $("barFill").style.width = pct+"%";
+    $("barFill").style.background = rem<=10 ? "var(--hot)" : rem<=60 ? "var(--line)" : "var(--sign)";
+  }
+  function finishRound(){
+    if(!state.running) return;
+    state.running = false;
+    state.frozen = false; stopSiren();
+    clearInterval(timer); timer=null;
+    wantRecog = false; stopRecog();
+    setMic(false,"stopped");
+    $("clock").classList.remove("dbl-on");
+    $("policeBanner").classList.remove("on");
+    $("eventToast").className = "";
+    endHorn();
+    var sorted = state.players.slice().sort(function(a,b){return b.score-a.score;});
+    var win = sorted[0];
+    var tie = sorted.length>1 && sorted[1].score===win.score;
+
+    // win-streak bookkeeping
+    var streakLine = "";
+    if(win && win.score>0 && !tie){
+      if(streak.name===win.name){ streak.count++; } else { streak.name=win.name; streak.count=1; }
+      if(streak.count>=2){ streakLine = win.name + " wins again — that's " + streak.count + " in a row!"; }
+      // persistent scoreboard
+      wins[win.name] = (wins[win.name]||0) + 1;
+      try{ localStorage.setItem("plateHuntWins", JSON.stringify(wins)); }catch(e){}
+    } else {
+      streak.name=null; streak.count=0;
+    }
+    try{ localStorage.setItem("plateHuntStreak", JSON.stringify(streak)); }catch(e){}
+
+    setTimeout(function(){
+      if(!win || win.score===0){ say("Time! Nobody spotted a single one."); }
+      else if(tie){ say("Time! It's a tie at " + win.score + "."); }
+      else {
+        say("Time's up! " + win.name + " wins with " + win.score + (win.score===1?" spot.":" spots."));
+        if(streakLine) say(streakLine);
+      }
+    }, 700);
+    renderEnd(sorted, tie, streakLine);
+    renderHall();
+    show("end");
+  }
+
+  /* ---------------- renders ---------------- */
+  function playerKeyHint(p){ return '“' + p.name + '”'; }
+  function renderSetupPlayers(){
+    var box = $("playerList"); box.innerHTML="";
+    state.players.forEach(function(p){
+      var row=document.createElement("div"); row.className="prow";
+      row.innerHTML =
+        '<span class="dot" style="background:'+p.color+'"></span>'+
+        '<span class="nm">'+esc(p.name)+'</span>'+
+        '<span class="say">say '+esc(playerKeyHint(p))+'</span>'+
+        '<button class="xbtn" data-rm="'+p.id+'">×</button>';
+      box.appendChild(row);
+    });
+    box.querySelectorAll("[data-rm]").forEach(function(b){
+      b.onclick=function(){ removePlayer(+b.getAttribute("data-rm")); };
+    });
+  }
+  function renderGame(){
+    var box=$("playersGame"); 
+    // rebuild only if count changed
+    if(box.childElementCount !== state.players.length){
+      box.innerHTML="";
+      state.players.forEach(function(p){
+        var el=document.createElement("div");
+        el.className="pcard"; el.setAttribute("data-pid",p.id);
+        el.innerHTML =
+          '<span class="accent" style="background:'+p.color+'"></span>'+
+          '<button class="minus" data-minus="'+p.id+'">–</button>'+
+          '<div class="pname"><b>'+esc(p.name)+' <span class="crown" data-crown="'+p.id+'"></span></b><span>say '+esc(p.name)+'</span></div>'+
+          '<div class="scoreNum" data-score="'+p.id+'">0</div>'+
+          '<button class="plus" data-plus="'+p.id+'">+</button>';
+        box.appendChild(el);
+      });
+      box.querySelectorAll("[data-plus]").forEach(function(b){
+        b.onclick=function(){ var p=byId(+b.getAttribute("data-plus")); if(p&&state.running&&!state.paused&&!state.frozen) scorePoint(p,false); };
+      });
+      box.querySelectorAll("[data-minus]").forEach(function(b){
+        b.onclick=function(){ var p=byId(+b.getAttribute("data-minus")); if(p&&state.running) unscore(p); };
+      });
+    }
+    state.players.forEach(function(p){
+      var sc=box.querySelector('[data-score="'+p.id+'"]'); if(sc) sc.textContent=p.score;
+      var cr=box.querySelector('[data-crown="'+p.id+'"]'); if(cr) cr.textContent = (state.leaderId===p.id?"👑":"");
+      var card=box.querySelector('.pcard[data-pid="'+p.id+'"]'); if(card) card.classList.toggle("lead", state.leaderId===p.id);
+    });
+  }
+  function renderEnd(sorted, tie, streakLine){
+    var w=$("winName"), sub=$("winSub");
+    if(!sorted[0] || sorted[0].score===0){ w.textContent="NO SPOTS"; sub.textContent="BETTER LUCK NEXT ROAD"; }
+    else if(tie){ w.textContent="TIE!"; sub.textContent=sorted[0].score+" SPOTS EACH"; }
+    else { w.textContent=sorted[0].name.toUpperCase(); sub.textContent=sorted[0].score+(sorted[0].score===1?" SPOT":" SPOTS")+" · "+state.target.toUpperCase(); }
+    var sb=$("streakBanner");
+    if(sb){
+      if(streakLine && streak.count>=2){ sb.textContent="🔥 "+streak.count+" WINS IN A ROW 🔥"; sb.style.display="block"; }
+      else { sb.style.display="none"; }
+    }
+    var box=$("standings"); box.innerHTML="";
+    sorted.forEach(function(p,i){
+      var row=document.createElement("div"); row.className="standing";
+      row.innerHTML='<span class="rk">'+(i+1)+'</span><span class="dot" style="background:'+p.color+'"></span><span class="sn">'+esc(p.name)+'</span><span class="sv">'+p.score+'</span>';
+      box.appendChild(row);
+    });
+  }
+  function esc(s){ return (s+"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function byId(id){ return state.players.filter(function(p){return p.id===id;})[0]; }
+
+  /* ---------------- player mgmt ---------------- */
+  function addPlayer(name){
+    name = (name||"").trim();
+    if(!name){ name = SUGGEST[state.players.length % SUGGEST.length]; }
+    var color = PALETTE[state.players.length % PALETTE.length];
+    state.players.push({id:idc++, name:name, key:name.toLowerCase(), color:color, score:0});
+  }
+  function removePlayer(id){
+    state.players = state.players.filter(function(p){return p.id!==id;});
+    renderSetupPlayers(); persist();
+  }
+
+  function renderHall(){
+    var names = Object.keys(wins).filter(function(n){ return wins[n]>0; });
+    var card = $("hallCard"), list = $("hallList");
+    if(!card || !list) return;
+    if(!names.length){ card.style.display="none"; return; }
+    card.style.display="block";
+    names.sort(function(a,b){ return wins[b]-wins[a]; });
+    var medals = ["🥇","🥈","🥉"];
+    list.innerHTML = names.map(function(n,i){
+      return '<div class="hallrow"><span class="medal">'+(medals[i]||"")+'</span><span class="hn">'+esc(n)+'</span><span class="hv">'+wins[n]+'</span></div>';
+    }).join("");
+  }
+
+  /* ---------------- wire up setup ---------------- */
+  renderSetupPlayers();
+  renderHall();
+  // duration chips
+  $("durChips").querySelectorAll(".chip").forEach(function(c){
+    c.classList.toggle("sel", +c.getAttribute("data-sec")===state.durationSec);
+    c.onclick=function(){
+      state.durationSec=+c.getAttribute("data-sec");
+      $("durChips").querySelectorAll(".chip").forEach(function(x){x.classList.remove("sel");});
+      c.classList.add("sel"); persist();
+    };
+  });
+  // sensitivity chips
+  $("sensChips").querySelectorAll(".chip").forEach(function(c){
+    c.classList.toggle("sel", c.getAttribute("data-sens")===state.sensitivity);
+    c.onclick=function(){
+      state.sensitivity=c.getAttribute("data-sens");
+      $("sensChips").querySelectorAll(".chip").forEach(function(x){x.classList.remove("sel");});
+      c.classList.add("sel");
+    };
+  });
+  // reset scoreboard
+  $("resetWinsBtn").onclick=function(){
+    wins = {}; streak={name:null,count:0};
+    try{ localStorage.removeItem("plateHuntWins"); localStorage.setItem("plateHuntStreak", JSON.stringify(streak)); }catch(e){}
+    renderHall();
+  };
+  // target
+  $("targetInput").value = state.target;
+  $("targetInput").oninput=function(){ state.target=this.value.trim()||"Toyota"; state.chosenTarget=state.target; persist(); };
+  $("targetChips").querySelectorAll(".chip").forEach(function(c){
+    c.onclick=function(){ state.target=c.textContent; state.chosenTarget=c.textContent; $("targetInput").value=c.textContent; persist(); };
+  });
+  // add player
+  function doAdd(){
+    var v=$("playerInput").value;
+    if(state.players.length>=8){ $("playerInput").value=""; return; }
+    addPlayer(v); $("playerInput").value=""; renderSetupPlayers(); persist();
+  }
+  $("addBtn").onclick=doAdd;
+  $("playerInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } });
+  // start
+  $("startBtn").onclick=function(){
+    if(state.players.length<1){ addPlayer(); renderSetupPlayers(); }
+    persist();
+    startRound();
+  };
+
+  /* ---------------- game controls ---------------- */
+  $("pauseBtn").onclick=function(){
+    if(!state.running) return;
+    if(!state.paused){
+      state.paused=true; state.pausedRemain=state.endTime-Date.now();
+      wantRecog=false; stopRecog(); setMic(false,"paused"); stopSiren();
+      $("pauseBtn").textContent="Resume";
+      say("Paused");
+    } else {
+      state.paused=false; state.endTime=Date.now()+state.pausedRemain; lastNow=0;
+      $("pauseBtn").textContent="Pause";
+      wantRecog=recogSupported; if(recogSupported) startRecog();
+      if(state.frozen) startSiren();
+      say("Resume");
+    }
+  };
+  $("endBtn").onclick=function(){ if(state.running){ state.frozen=false; stopSiren(); state.endTime=Date.now(); state.paused=false; } };
+  $("micStat").onclick=function(){ retryMic(); };
+  $("againBtn").onclick=function(){ startRound(); };
+  $("newBtn").onclick=function(){
+    if(timer){clearInterval(timer);timer=null;}
+    state.running=false; wantRecog=false; stopRecog(); stopSiren();
+    $("pauseBtn").textContent="Pause";
+    renderSetupPlayers(); renderHall();
+    show("setup");
+  };
+
+})();
+</script>
+</body>
+</html>
