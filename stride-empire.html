@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Stride Empire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11151c; --bg2:#161c25; --panel:#1d2530; --panel2:#232d3b;
+    --line:#2c3744; --ink:#eee6d4; --mut:#93a0b0; --gold:#e8b04b;
+    --good:#69c17d; --bad:#d9604f; --accent:#9aa86b;
+    --rad:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    overflow:hidden;user-select:none;-webkit-user-select:none;
+  }
+  #app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;position:relative;
+    background:radial-gradient(120% 80% at 50% -10%, var(--bg2), var(--bg));}
+  .cinzel{font-family:Cinzel,serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---- TOP BAR ---- */
+  header{padding:10px 12px 8px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(0,0,0,.25),transparent);position:relative;z-index:5;}
+  .resbar{display:flex;gap:6px;}
+  .res{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:6px 4px;text-align:center;min-width:0;}
+  .res .lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);}
+  .res .val{font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1.2;}
+  .res .ic{font-size:13px;}
+
+  /* age track */
+  .agetrack{display:flex;align-items:center;gap:0;margin-top:9px;padding:0 2px;}
+  .agedot{flex:1;height:4px;border-radius:3px;background:var(--line);position:relative;margin:0 2px;}
+  .agedot.done{background:var(--accent);}
+  .agedot.cur{background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .agename{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;}
+  .agename .now{font-family:Cinzel,serif;font-weight:700;font-size:14px;color:var(--accent);
+    text-shadow:0 0 18px color-mix(in srgb,var(--accent) 50%,transparent);}
+  .agename .who{font-size:11px;color:var(--mut);}
+
+  /* ---- MAIN SCROLL ---- */
+  main{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 12px 16px;-webkit-overflow-scrolling:touch;}
+  main::-webkit-scrollbar{width:0;}
+  h2.sec{font-family:Cinzel,serif;font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--mut);margin:4px 0 10px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);
+    padding:11px;margin-bottom:9px;display:flex;align-items:center;gap:11px;}
+  .card .emoji{font-size:26px;width:42px;height:42px;display:grid;place-items:center;
+    background:var(--panel2);border-radius:10px;flex:none;}
+  .card .body{flex:1;min-width:0;}
+  .card .name{font-weight:700;font-size:14px;display:flex;gap:7px;align-items:center;}
+  .lvl{font-size:10px;background:var(--accent);color:#15110a;font-weight:700;border-radius:5px;
+    padding:1px 6px;font-family:'JetBrains Mono',monospace;}
+  .card .desc{font-size:11px;color:var(--mut);margin-top:2px;line-height:1.35;}
+  .cost{display:flex;gap:9px;margin-top:5px;font-size:11px;font-family:'JetBrains Mono',monospace;}
+  .cost span{display:inline-flex;gap:3px;align-items:center;}
+  .cost .no{color:var(--bad);}
+
+  .btn{border:none;border-radius:10px;padding:9px 13px;font-weight:700;font-size:12.5px;
+    font-family:inherit;cursor:pointer;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    flex:none;transition:transform .05s, filter .15s;}
+  .btn:active{transform:scale(.94);}
+  .btn.go{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));
+    color:#15110a;border-color:transparent;}
+  .btn:disabled{opacity:.4;filter:grayscale(.6);}
+  .btn.wide{width:100%;padding:13px;font-size:14px;}
+  .qty{font-family:'JetBrains Mono',monospace;font-size:13px;min-width:26px;text-align:center;}
+
+  /* ---- MARCH (steps) ---- */
+  .march-wrap{position:relative;text-align:center;padding:6px 0 14px;}
+  #march{width:170px;height:170px;border-radius:50%;border:none;cursor:pointer;color:#15110a;
+    background:radial-gradient(circle at 50% 35%, color-mix(in srgb,var(--accent) 85%,#fff 8%), var(--accent) 60%, color-mix(in srgb,var(--accent) 60%,#000));
+    box-shadow:0 12px 30px color-mix(in srgb,var(--accent) 35%,transparent), inset 0 -8px 16px rgba(0,0,0,.25);
+    font-family:Cinzel,serif;font-weight:900;font-size:22px;letter-spacing:.05em;transition:transform .06s;}
+  #march:active{transform:scale(.93);}
+  #march .sub{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;margin-top:3px;letter-spacing:0;}
+  .march-ring{position:absolute;inset:0;pointer-events:none;}
+  .pop{position:absolute;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);
+    pointer-events:none;animation:rise .7s ease-out forwards;font-size:16px;}
+  @keyframes rise{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-46px)}}
+  .sync{display:flex;gap:7px;margin-top:6px;}
+  .sync input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    color:var(--ink);padding:9px;font-family:'JetBrains Mono',monospace;font-size:13px;min-width:0;}
+  .hint{font-size:10.5px;color:var(--mut);text-align:center;margin-top:9px;line-height:1.4;}
+
+  /* ---- TABS ---- */
+  nav{display:flex;border-top:1px solid var(--line);background:var(--bg2);padding:4px 4px env(safe-area-inset-bottom);}
+  nav button{flex:1;background:none;border:none;color:var(--mut);font-family:inherit;font-size:9.5px;
+    font-weight:600;padding:7px 2px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;letter-spacing:.03em;}
+  nav button .ti{font-size:19px;line-height:1;filter:grayscale(.5);opacity:.7;}
+  nav button.on{color:var(--accent);}
+  nav button.on .ti{filter:none;opacity:1;}
+
+  .row{display:flex;align-items:center;gap:8px;}
+  .grow{flex:1;}
+  .pill{font-size:10px;color:var(--mut);background:var(--panel2);border:1px solid var(--line);
+    padding:2px 7px;border-radius:20px;}
+  .center{text-align:center;}
+
+  /* leaderboard */
+  .lbrow{display:flex;align-items:center;gap:10px;padding:10px 11px;border-bottom:1px solid var(--line);}
+  .lbrow:last-child{border:none;}
+  .rank{font-family:'JetBrains Mono',monospace;font-weight:700;width:26px;text-align:center;color:var(--mut);font-size:14px;}
+  .rank.top{color:var(--gold);}
+  .lbrow.me{background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:10px;}
+  .tro{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);}
+
+  /* ---- BATTLE OVERLAY ---- */
+  #battle{position:absolute;inset:0;z-index:40;background:linear-gradient(180deg,#0d1117,#161c25);
+    display:none;flex-direction:column;padding:14px;}
+  #battle.show{display:flex;}
+  .bfield{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;}
+  .hpblock .htop{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;font-weight:600;}
+  .hpbar{height:18px;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+  .hpfill{height:100%;border-radius:20px;transition:width .12s linear;}
+  .hpfill.you{background:linear-gradient(90deg,var(--good),#9fe3ad);}
+  .hpfill.foe{background:linear-gradient(90deg,#e98575,var(--bad));}
+  .vs{text-align:center;font-family:Cinzel,serif;font-size:13px;color:var(--mut);letter-spacing:.2em;}
+  .clash{font-size:40px;text-align:center;}
+  .tacrow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;}
+  .tac{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:11px;
+    font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;}
+  .tac:disabled{opacity:.35;}
+  .tac.ready{border-color:var(--accent);box-shadow:0 0 12px color-mix(in srgb,var(--accent) 40%,transparent);}
+  .tac .te{font-size:18px;}
+  .meterwrap{margin-bottom:10px;}
+  .meterlbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-bottom:4px;font-weight:600;}
+  .meter{height:12px;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+  .meterfill{height:100%;background:linear-gradient(90deg,var(--gold),#ffd980);width:0;transition:width .1s;}
+  #bmarch{width:100%;padding:20px;font-family:Cinzel,serif;font-weight:900;font-size:20px;letter-spacing:.06em;
+    border:none;border-radius:14px;color:#15110a;cursor:pointer;
+    background:radial-gradient(circle at 50% 0%, #ffe6a8, var(--gold));box-shadow:0 8px 22px rgba(232,176,75,.3);}
+  #bmarch:active{transform:scale(.97);}
+  #bmarch .s{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:3px;font-weight:700;letter-spacing:0;color:#3a2c08;}
+  .blog{font-size:11px;color:var(--mut);text-align:center;height:16px;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+  .bhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .bhead .x{font-size:20px;color:var(--mut);background:none;border:none;cursor:pointer;}
+
+  /* result modal */
+  #modal{position:absolute;inset:0;z-index:60;background:rgba(8,11,16,.82);display:none;
+    align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px);}
+  #modal.show{display:flex;}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:center;max-width:340px;width:100%;}
+  .mbox h3{font-family:Cinzel,serif;margin:0 0 4px;font-size:24px;}
+  .mbox p{color:var(--mut);font-size:13px;margin:0 0 14px;}
+  .loot{display:flex;justify-content:center;gap:14px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-weight:700;}
+  .loot div{font-size:12px;}
+  .toast{position:absolute;bottom:78px;left:50%;transform:translateX(-50%);background:var(--panel2);
+    border:1px solid var(--line);color:var(--ink);padding:9px 15px;border-radius:30px;font-size:12.5px;font-weight:600;
+    z-index:70;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90%;}
+  .toast.show{opacity:1;}
+  .empty{text-align:center;color:var(--mut);font-size:12.5px;padding:24px 10px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="resbar" id="resbar"></div>
+    <div class="agetrack" id="agetrack"></div>
+    <div class="agename">
+      <span class="now cinzel" id="agenow">Stone Age</span>
+      <span class="who" id="whoami">—</span>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <nav id="nav">
+    <button data-tab="walk" class="on"><span class="ti">👣</span>March</button>
+    <button data-tab="city"><span class="ti">🏛️</span>City</button>
+    <button data-tab="army"><span class="ti">⚔️</span>Army</button>
+    <button data-tab="research"><span class="ti">📜</span>Research</button>
+    <button data-tab="battle"><span class="ti">🗡️</span>Battle</button>
+    <button data-tab="board"><span class="ti">🏆</span>Ranks</button>
+  </nav>
+
+  <!-- battle overlay -->
+  <div id="battle">
+    <div class="bhead">
+      <span class="cinzel" id="bvs" style="font-size:15px;">Battle</span>
+      <button class="x" onclick="endBattle(true)">✕</button>
+    </div>
+    <div class="bfield">
+      <div class="hpblock">
+        <div class="htop"><span id="foename">Enemy</span><span class="mono" id="foehp">100%</span></div>
+        <div class="hpbar"><div class="hpfill foe" id="foefill" style="width:100%"></div></div>
+      </div>
+      <div class="clash" id="clash">⚔️</div>
+      <div class="hpblock">
+        <div class="htop"><span>Your Army</span><span class="mono" id="youhp">100%</span></div>
+        <div class="hpbar"><div class="hpfill you" id="youfill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="blog" id="blog"></div>
+    <div class="tacrow" id="tacrow"></div>
+    <div class="meterwrap">
+      <div class="meterlbl"><span>March meter — walk to charge tactics</span><span class="mono" id="metertxt">0%</span></div>
+      <div class="meter"><div class="meterfill" id="meterfill"></div></div>
+    </div>
+    <button id="bmarch">MARCH<span class="s">tap fast to advance &amp; charge</span></button>
+  </div>
+
+  <div id="modal"><div class="mbox" id="mbox"></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ============================================================
+   STRIDE EMPIRE — a step-powered build-an-empire-through-the-ages game
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const fmt=n=>{n=Math.floor(n);if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(n>=1e4?0:1)+'k';return''+n;};
+const now=()=>Date.now();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- DATA ---------- */
+const AGES=[
+  {name:'Stone Age',   accent:'#9aa86b'},
+  {name:'Bronze Age',  accent:'#cf8a47'},
+  {name:'Iron Age',    accent:'#a7b6c4'},
+  {name:'Classical Age',accent:'#dcb154'},
+  {name:'Medieval Age',accent:'#c25849'},
+  {name:'Gunpowder Age',accent:'#5f93c2'},
+  {name:'Industrial Age',accent:'#caa24e'},
+];
+// Town Center level needed to enter each age = its index
+const BUILDINGS=[
+  {id:'tc',  name:'Town Center', emoji:'🏛️', minAge:0, base:{steps:0,gold:0}, max:7,
+    desc:l=>`Heart of your empire. Reach level ${l+1} to advance an age. +${l*5}% to all output.`},
+  {id:'house',name:'Dwellings',  emoji:'🏠', minAge:0, base:{steps:120,gold:0}, max:20,
+    desc:l=>`Generates <b>${5*l}</b> gold / min.`},
+  {id:'farm', name:'Granary',    emoji:'🌾', minAge:0, base:{steps:150,gold:40}, max:20,
+    desc:l=>`Logistics: <b>+${l*12}%</b> steps per march.`},
+  {id:'lib',  name:'Academy',    emoji:'📚', minAge:1, base:{steps:300,gold:120}, max:20,
+    desc:l=>`Generates <b>${3*l}</b> science / min.`},
+  {id:'brk',  name:'Barracks',   emoji:'⚔️', minAge:0, base:{steps:200,gold:60}, max:20,
+    desc:l=>`Army capacity <b>${4*l}</b>. Unlocks troops.`},
+  {id:'tower',name:'Watchtower', emoji:'🗼', minAge:1, base:{steps:260,gold:90}, max:20,
+    desc:l=>`Defense rating <b>${15*l}</b> — protects your loot.`},
+];
+const TROOPS=[
+  {id:'warrior',name:'Warrior',  emoji:'🪓', minAge:0, atk:10, hp:30, cost:{gold:40,steps:30}},
+  {id:'slinger',name:'Slinger',  emoji:'🪨', minAge:0, atk:14, hp:18, cost:{gold:55,steps:40}},
+  {id:'spear',  name:'Spearman', emoji:'🛡️', minAge:1, atk:18, hp:55, cost:{gold:120,steps:70}},
+  {id:'archer', name:'Archer',   emoji:'🏹', minAge:1, atk:26, hp:34, cost:{gold:150,steps:90}},
+  {id:'horse',  name:'Horseman', emoji:'🐎', minAge:2, atk:40, hp:80, cost:{gold:300,steps:160}},
+  {id:'legion', name:'Legionary',emoji:'⚔️', minAge:3, atk:55, hp:120,cost:{gold:520,steps:240}},
+  {id:'knight', name:'Knight',   emoji:'🐴', minAge:4, atk:90, hp:200,cost:{gold:900,steps:400}},
+  {id:'musket', name:'Musketeer',emoji:'🔫', minAge:5, atk:150,hp:240,cost:{gold:1500,steps:650}},
+  {id:'rifle',  name:'Rifleman', emoji:'🎯', minAge:6, atk:240,hp:340,cost:{gold:2400,steps:1000}},
+];
+const TECHS=[
+  {id:'agri', name:'Agriculture', emoji:'🌱', minAge:0, cost:{science:60,steps:200},  desc:'+25% gold output.'},
+  {id:'logi', name:'Logistics',   emoji:'🥾', minAge:0, cost:{science:80,steps:250},  desc:'+30% steps per march.'},
+  {id:'write',name:'Writing',     emoji:'✒️', minAge:1, cost:{science:140,steps:350}, desc:'+30% science output.'},
+  {id:'bronze',name:'Metallurgy', emoji:'🔨', minAge:1, cost:{science:160,steps:400}, desc:'+20% troop attack.'},
+  {id:'tactics',name:'Field Tactics',emoji:'🎖️',minAge:2,cost:{science:240,steps:550},desc:'Unlock the Volley tactic in battle.'},
+  {id:'medic', name:'Field Medicine',emoji:'⛑️',minAge:3,cost:{science:400,steps:800},desc:'Unlock the Rally Cry (heal) tactic.'},
+  {id:'siege', name:'Siege Engineering',emoji:'🏰',minAge:4,cost:{science:700,steps:1300},desc:'+1 tactic charge & unlock Bombard.'},
+];
+const TACTICS={
+  charge:{name:'Charge', emoji:'🐎', need:null,     desc:'2× your damage for 4s'},
+  volley:{name:'Volley', emoji:'🏹', need:'tactics',desc:'Hit enemy for 18% of max HP'},
+  rally: {name:'Rally',  emoji:'⛑️', need:'medic',  desc:'Heal your army 25%'},
+  bomb:  {name:'Bombard',emoji:'💥', need:'siege',  desc:'Hit enemy for 30% of max HP'},
+};
+const BOTS=[
+  {name:'Boudica',  age:1, mult:.8},  {name:'Hannibal', age:2, mult:1.0},
+  {name:'Cleopatra',age:3, mult:1.15},{name:'Ashoka',   age:4, mult:1.3},
+  {name:'Tamerlane',age:5, mult:1.55},{name:'Bismarck', age:6, mult:1.9},
+];
+
+/* ---------- STATE ---------- */
+let state, board=[], tab='walk';
+function freshState(name){
+  return {name, age:0, steps:300, gold:200, science:0, trophies:0,
+    b:{tc:1,house:1,farm:0,lib:0,brk:1,tower:0}, army:{}, tech:{}, last:now(), created:now()};
+}
+
+/* ---------- STORAGE (localStorage — works on GitHub Pages / any HTTPS host) ---------- */
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+async function save(){ lsSet('stride_save', JSON.stringify(state)); }
+async function loadSave(){ const r=lsGet('stride_save'); if(r){try{return JSON.parse(r);}catch(e){}} return null; }
+async function getBoard(){ const r=lsGet('stride_board'); if(r){try{return JSON.parse(r);}catch(e){}} return []; }
+async function pushScore(){
+  let arr=await getBoard();
+  arr=arr.filter(x=>x.name!==state.name);
+  arr.push({name:state.name,trophies:state.trophies,age:state.age,t:now()});
+  lsSet('stride_board', JSON.stringify(arr));
+  board=arr;
+}
+
+/* ---------- DERIVED ---------- */
+const bld=id=>state.b[id]||0;
+const tcBonus=()=>1+(bld('tc')-1)*0.05;
+const goldRate=()=>5*bld('house')*tcBonus()*(state.tech.agri?1.25:1);
+const sciRate=()=>3*bld('lib')*tcBonus()*(state.tech.write?1.3:1);
+const stepMult=()=>(1+bld('farm')*0.12)*(state.tech.logi?1.3:1);
+const armyCap=()=>4*bld('brk');
+const armyCount=()=>Object.values(state.army).reduce((a,b)=>a+b,0);
+const atkBonus=()=>state.tech.bronze?1.2:1;
+function armyPower(){let p=0;for(const t of TROOPS){const n=state.army[t.id]||0;p+=n*(t.atk*atkBonus()*1.6+t.hp);}return Math.round(p*tcBonus());}
+function defenseRating(){return 15*bld('tower')*tcBonus();}
+function canAfford(c){return (state.steps>=(c.steps||0))&&(state.gold>=(c.gold||0))&&(state.science>=(c.science||0));}
+function pay(c){state.steps-=c.steps||0;state.gold-=c.gold||0;state.science-=c.science||0;}
+function bcost(b){const l=bld(b.id);return {steps:Math.ceil((b.base.steps||1)*Math.pow(1.65,l)),gold:Math.ceil((b.base.gold)*Math.pow(1.7,l))};}
+
+/* ---------- IDLE PRODUCTION ---------- */
+function applyIdle(){
+  const mins=clamp((now()-state.last)/60000,0,480); // cap 8h
+  state.gold+=goldRate()*mins;
+  state.science+=sciRate()*mins;
+  state.last=now();
+}
+setInterval(()=>{
+  if(!state) return;
+  state.gold+=goldRate()/60;
+  state.science+=sciRate()/60;
+  if($('#battle').classList.contains('show')) return;
+  if(tab==='walk'||tab==='city'||tab==='army'||tab==='research') renderTop();
+},1000);
+setInterval(()=>{ if(state){state.last=now();save();} },8000);
+
+/* ---------- TOAST ---------- */
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ---------- TOP BAR ---------- */
+function renderTop(){
+  const a=AGES[state.age];
+  document.documentElement.style.setProperty('--accent',a.accent);
+  $('#agenow').textContent=a.name;
+  $('#whoami').textContent=`${state.name} · ⚔️${fmt(armyPower())}`;
+  $('#resbar').innerHTML=[
+    ['👣','Steps',fmt(state.steps)],
+    ['🪙','Gold',fmt(state.gold)],
+    ['🔬','Science',fmt(state.science)],
+    ['🏆','Trophies',fmt(state.trophies)],
+  ].map(([i,l,v])=>`<div class="res"><div class="ic">${i}</div><div class="val">${v}</div><div class="lbl">${l}</div></div>`).join('');
+  $('#agetrack').innerHTML=AGES.map((_,i)=>`<div class="agedot ${i<state.age?'done':''} ${i===state.age?'cur':''}"></div>`).join('');
+}
+
+/* ---------- TABS / RENDER ---------- */
+function setTab(t){tab=t;[...$('#nav').children].forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();}
+function render(){renderTop();const m=$('#main');m.scrollTop=0;
+  if(tab==='walk')m.innerHTML='',renderWalk(m);
+  else if(tab==='city')renderCity(m);
+  else if(tab==='army')renderArmy(m);
+  else if(tab==='research')renderResearch(m);
+  else if(tab==='battle')renderBattle(m);
+  else if(tab==='board')renderBoard(m);
+}
+
+/* ---- WALK / MARCH + REAL PEDOMETER ---- */
+const SECURE=(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1');
+let ped={on:false,session:0,g:[0,0,0],smooth:0,peaked:false,last:0,sens:1.2};
+function renderWalk(m){
+  const per=Math.round(25*stepMult());
+  m.innerHTML=`
+    <h2 class="sec">Walk to power your empire</h2>
+    <div class="card" style="border-color:var(--accent);flex-direction:column;align-items:stretch;text-align:center;padding:16px;">
+      <div style="font-size:32px;">📡</div>
+      <div class="name" style="justify-content:center;font-size:15px;">Live step counter</div>
+      <div class="desc" style="text-align:center;">Counts your real steps from your phone's motion sensor while the app is open.</div>
+      <div class="mono" style="font-size:30px;font-weight:700;margin:8px 0 0;color:var(--accent);"><span id="pedcount">${ped.session}</span><span style="font-size:13px;color:var(--mut);font-family:Inter,sans-serif;"> steps this walk</span></div>
+      <button class="btn ${ped.on?'':'go'} wide" id="pedbtn" style="margin-top:8px;">${ped.on?'⏹ Stop counting':'▶ Start counting steps'}</button>
+      <div class="row" style="justify-content:center;gap:10px;margin-top:9px;font-size:11px;color:var(--mut);">
+        <span>Sensitivity</span>
+        <button class="btn" id="sensdown" style="padding:5px 11px;">− less</button>
+        <button class="btn" id="sensup" style="padding:5px 11px;">more +</button>
+      </div>
+      ${SECURE?'':'<div class="desc" style="color:var(--bad);margin-top:9px;">⚠️ Motion sensors require HTTPS. Open this from your GitHub&nbsp;Pages link (https://…), not a downloaded file.</div>'}
+    </div>
+    <div class="march-wrap" style="padding-top:2px;">
+      <button id="march">MARCH<span class="sub">or tap to take steps</span></button>
+    </div>
+    <div class="card">
+      <div class="emoji">🛰️</div>
+      <div class="body">
+        <div class="name">Sync steps manually</div>
+        <div class="desc">Add steps from your fitness tracker.</div>
+        <div class="sync">
+          <input id="stepin" type="number" inputmode="numeric" placeholder="e.g. 4500" min="0">
+          <button class="btn go" id="syncbtn">Add</button>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Each real step banks <b>${per}</b> in-game steps (boosted by your Granary &amp; Logistics).<br>Keep the screen awake while walking, and tune sensitivity if the count runs high or low.</p>`;
+  const btn=$('#march');
+  btn.addEventListener('click',e=>{e.preventDefault();gainSteps(Math.round(25*stepMult()),btn);});
+  $('#syncbtn').onclick=()=>{const v=parseInt($('#stepin').value||'0',10);if(v>0){state.steps+=Math.round(v*stepMult());$('#stepin').value='';renderTop();toast('Banked '+fmt(v)+' steps');save();}};
+  $('#pedbtn').onclick=togglePed;
+  $('#sensup').onclick=()=>{ped.sens=clamp(+(ped.sens-0.25).toFixed(2),0.6,2.6);state.pedSens=ped.sens;toast('More sensitive');save();};
+  $('#sensdown').onclick=()=>{ped.sens=clamp(+(ped.sens+0.25).toFixed(2),0.6,2.6);state.pedSens=ped.sens;toast('Less sensitive');save();};
+}
+function gainSteps(g,btn){state.steps+=g;renderTop();
+  if(btn){const r=btn.getBoundingClientRect();const p=document.createElement('div');p.className='pop';p.textContent='+'+g;
+    p.style.left=(r.left+r.width/2-14)+'px';p.style.top=(r.top+30)+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),700);}}
+async function togglePed(){
+  if(ped.on){stopPed();return;}
+  if(!SECURE){toast('Needs HTTPS — open the GitHub Pages link');return;}
+  if(typeof DeviceMotionEvent==='undefined'){toast('No motion sensor available here');return;}
+  try{
+    if(typeof DeviceMotionEvent.requestPermission==='function'){
+      const p=await DeviceMotionEvent.requestPermission();
+      if(p!=='granted'){toast('Motion permission denied');return;}
+    }
+    window.addEventListener('devicemotion',onMotion,{passive:true});
+    ped.on=true;ped.session=0;ped.smooth=0;ped.peaked=false;ped.last=0;
+    render();toast('Counting — start walking! 🚶');
+  }catch(e){toast('Could not start the sensor');}
+}
+function stopPed(){ped.on=false;window.removeEventListener('devicemotion',onMotion);
+  if(ped.session>0)toast('Walk logged: '+ped.session+' steps');render();save();}
+function onMotion(e){
+  const a=e.accelerationIncludingGravity||e.acceleration; if(!a)return;
+  const ax=a.x||0, ay=a.y||0, az=a.z||0;
+  const k=0.8; // low-pass to estimate gravity, then subtract for linear acceleration
+  ped.g[0]=k*ped.g[0]+(1-k)*ax; ped.g[1]=k*ped.g[1]+(1-k)*ay; ped.g[2]=k*ped.g[2]+(1-k)*az;
+  const lx=ax-ped.g[0], ly=ay-ped.g[1], lz=az-ped.g[2];
+  const mag=Math.sqrt(lx*lx+ly*ly+lz*lz);
+  ped.smooth=ped.smooth*0.7+mag*0.3;
+  const t=now();
+  if(!ped.peaked && ped.smooth>ped.sens && (t-ped.last)>280){
+    ped.peaked=true; ped.last=t; ped.session++;
+    state.steps+=Math.max(1,Math.round(stepMult()));
+    const c=document.getElementById('pedcount'); if(c)c.textContent=ped.session;
+    renderTop();
+  } else if(ped.peaked && ped.smooth<ped.sens*0.55){ ped.peaked=false; }
+}
+
+/* ---- CITY ---- */
+function renderCity(m){
+  let h=`<h2 class="sec">Your City <span class="pill">${AGES[state.age].name}</span></h2>`;
+  // advance age card
+  const nextAge=state.age+1;
+  if(nextAge<AGES.length){
+    const ready=bld('tc')>=nextAge+1; // tc level must be >= next age index+1... define: need tc level = nextAge+1
+    const need=nextAge+1;
+    const cost={science:200*nextAge,steps:600*nextAge};
+    const ok=ready&&canAfford(cost);
+    h+=`<div class="card" style="border-color:var(--accent);">
+      <div class="emoji">⏳</div><div class="body">
+        <div class="name">Advance to ${AGES[nextAge].name}</div>
+        <div class="desc">${ready?'Town Center is ready.':`Upgrade Town Center to level ${need} first.`}</div>
+        <div class="cost"><span class="${state.science>=cost.science?'':'no'}">🔬${fmt(cost.science)}</span><span class="${state.steps>=cost.steps?'':'no'}">👣${fmt(cost.steps)}</span></div>
+      </div>
+      <button class="btn go" ${ok?'':'disabled'} onclick="advanceAge(${nextAge})">Advance</button></div>`;
+  }
+  for(const b of BUILDINGS){
+    const lvl=bld(b.id);
+    if(b.minAge>state.age && lvl===0) continue;
+    const locked=b.minAge>state.age;
+    const maxed=lvl>=b.max;
+    const c=bcost(b);
+    const ok=!locked&&!maxed&&canAfford(c);
+    h+=`<div class="card">
+      <div class="emoji">${b.emoji}</div>
+      <div class="body">
+        <div class="name">${b.name} ${lvl?`<span class="lvl">Lv ${lvl}</span>`:''}</div>
+        <div class="desc">${locked?`Unlocks in the ${AGES[b.minAge].name}.`:b.desc(lvl)}</div>
+        ${(!locked&&!maxed)?`<div class="cost"><span class="${state.steps>=c.steps?'':'no'}">👣${fmt(c.steps)}</span>${c.gold?`<span class="${state.gold>=c.gold?'':'no'}">🪙${fmt(c.gold)}</span>`:''}</div>`:''}
+      </div>
+      <button class="btn ${ok?'go':''}" ${ok?'':'disabled'} onclick="upgrade('${b.id}')">${maxed?'Max':lvl?'Upgrade':'Build'}</button>
+    </div>`;
+  }
+  m.innerHTML=h;
+}
+function upgrade(id){const b=BUILDINGS.find(x=>x.id===id);const c=bcost(b);if(!canAfford(c))return;pay(c);state.b[id]=bld(id)+1;toast(b.name+' → Lv '+state.b[id]);render();save();}
+function advanceAge(n){const cost={science:200*n,steps:600*n};if(bld('tc')<n+1||!canAfford(cost))return;pay(cost);state.age=n;
+  flash(`A new age dawns — welcome to the ${AGES[n].name}!`);render();pushScore();save();}
+
+/* ---- ARMY ---- */
+function renderArmy(m){
+  let h=`<h2 class="sec">War Council <span class="pill">${armyCount()}/${armyCap()} · ⚔️${fmt(armyPower())}</span></h2>`;
+  if(bld('brk')===0) h+=`<div class="empty">Build a Barracks in your City to recruit troops.</div>`;
+  for(const t of TROOPS){
+    if(t.minAge>state.age) continue;
+    const have=state.army[t.id]||0;
+    const full=armyCount()>=armyCap();
+    const ok=canAfford(t.cost)&&!full;
+    h+=`<div class="card">
+      <div class="emoji">${t.emoji}</div>
+      <div class="body">
+        <div class="name">${t.name} ${have?`<span class="lvl">×${have}</span>`:''}</div>
+        <div class="desc">⚔️${Math.round(t.atk*atkBonus())} atk · ❤️${t.hp} hp</div>
+        <div class="cost"><span class="${state.gold>=t.cost.gold?'':'no'}">🪙${fmt(t.cost.gold)}</span><span class="${state.steps>=t.cost.steps?'':'no'}">👣${fmt(t.cost.steps)}</span></div>
+      </div>
+      <div class="row">
+        ${have?`<button class="btn" onclick="disband('${t.id}')">−</button>`:''}
+        <button class="btn ${ok?'go':''}" ${ok?'':'disabled'} onclick="train('${t.id}')">${full?'Full':'Train'}</button>
+      </div>
+    </div>`;
+  }
+  m.innerHTML=h;
+}
+function train(id){const t=TROOPS.find(x=>x.id===id);if(!canAfford(t.cost)||armyCount()>=armyCap())return;pay(t.cost);state.army[id]=(state.army[id]||0)+1;render();save();}
+function disband(id){if(state.army[id]>0){state.army[id]--;if(!state.army[id])delete state.army[id];render();save();}}
+
+/* ---- RESEARCH ---- */
+function renderResearch(m){
+  let h=`<h2 class="sec">Research <span class="pill">+${Math.round(sciRate())} 🔬/min</span></h2>`;
+  if(bld('lib')===0) h+=`<div class="card" style="border-color:var(--accent)"><div class="emoji">📚</div><div class="body"><div class="name">Build an Academy</div><div class="desc">Academies generate science. Build one in your City (Bronze Age) to unlock research.</div></div></div>`;
+  for(const t of TECHS){
+    if(t.minAge>state.age && !state.tech[t.id]) continue;
+    const done=!!state.tech[t.id];const locked=t.minAge>state.age;
+    const ok=!done&&!locked&&canAfford(t.cost);
+    h+=`<div class="card">
+      <div class="emoji">${t.emoji}</div>
+      <div class="body">
+        <div class="name">${t.name} ${done?'<span class="lvl">✓</span>':''}</div>
+        <div class="desc">${t.desc}</div>
+        ${(!done&&!locked)?`<div class="cost"><span class="${state.science>=t.cost.science?'':'no'}">🔬${fmt(t.cost.science)}</span><span class="${state.steps>=t.cost.steps?'':'no'}">👣${fmt(t.cost.steps)}</span></div>`:locked?`<div class="desc" style="color:var(--accent)">Unlocks in the ${AGES[t.minAge].name}</div>`:''}
+      </div>
+      ${done?'':`<button class="btn ${ok?'go':''}" ${ok?'':'disabled'} onclick="research('${t.id}')">Research</button>`}
+    </div>`;
+  }
+  m.innerHTML=h;
+}
+function research(id){const t=TECHS.find(x=>x.id===id);if(state.tech[id]||!canAfford(t.cost))return;pay(t.cost);state.tech[id]=true;toast(t.name+' researched!');render();save();}
+
+/* ---- BATTLE LIST ---- */
+function targets(){
+  const mine=armyPower();
+  const list=BOTS.map(b=>({name:b.name,age:b.age,power:Math.round(Math.max(80,mine*b.mult||120)*b.mult),trophies:Math.round(b.mult*180+b.age*60),bot:true}));
+  // include real players from board (not me) as targets
+  board.filter(p=>p.name!==state.name).forEach(p=>{
+    list.push({name:p.name,age:p.age||0,power:Math.round(50+p.trophies*1.4),trophies:p.trophies||0,bot:false});
+  });
+  return list.sort((a,b)=>a.power-b.power);
+}
+function renderBattle(m){
+  if(armyCount()===0){m.innerHTML=`<h2 class="sec">Choose your target</h2><div class="empty">You have no troops. Visit the <b>Army</b> tab to recruit a force before marching to war.</div>`;return;}
+  let h=`<h2 class="sec">Choose your target <span class="pill">Your ⚔️${fmt(armyPower())}</span></h2>`;
+  for(const t of targets()){
+    const odds=armyPower()/(armyPower()+t.power);
+    const tag=odds>.62?'<span class="pill" style="color:var(--good)">favoured</span>':odds<.4?'<span class="pill" style="color:var(--bad)">tough</span>':'<span class="pill">even</span>';
+    h+=`<div class="card">
+      <div class="emoji">${t.bot?'👑':'🧑‍🤝‍🧑'}</div>
+      <div class="body">
+        <div class="name">${t.name} ${tag}</div>
+        <div class="desc">${AGES[t.age]?AGES[t.age].name:'—'} · ⚔️${fmt(t.power)} · 🏆${fmt(t.trophies)}</div>
+      </div>
+      <button class="btn go" onclick='startBattle(${JSON.stringify(t)})'>Attack</button>
+    </div>`;
+  }
+  m.innerHTML=h;
+}
+
+/* ============ BATTLE ENGINE ============ */
+let B=null;
+function availTactics(){const out=['charge'];for(const k in TACTICS){if(k==='charge')continue;const need=TACTICS[k].need;if(!need||state.tech[need])out.push(k);}return out;}
+function startBattle(foe){
+  const youMax=armyPower()*2.2+200, foeMax=foe.power*2.0+200;
+  B={foe, youMax, foeMax, you:youMax, foe_hp:foeMax, meter:0, maxMeter:state.tech.siege?2:1, charges:0,
+     youDPS:armyPower()/8+6, foeDPS:foe.power/9+5, buffT:0, stunT:0, over:false, t:0};
+  $('#bvs').textContent='You ⚔️ '+foe.name;
+  $('#foename').textContent=foe.name;
+  $('#battle').classList.add('show');
+  $('#bmarch').onclick=battleMarch;
+  $('#blog').textContent='The armies clash!';
+  drawTactics();
+  clearInterval(B.loop);
+  B.loop=setInterval(battleTick,100);
+  drawBattle();
+}
+function drawTactics(){
+  const av=availTactics();
+  $('#tacrow').innerHTML=av.map(k=>{const t=TACTICS[k];
+    return `<button class="tac" id="tac_${k}" onclick="castTactic('${k}')"><span class="te">${t.emoji}</span>${t.name}<span style="font-size:9px;color:var(--mut)">${t.desc}</span></button>`;}).join('');
+  updateTacReady();
+}
+function updateTacReady(){
+  const ready=B.charges>=1;
+  availTactics().forEach(k=>{const el=$('#tac_'+k);if(!el)return;el.classList.toggle('ready',ready);el.disabled=!ready;});
+}
+function battleMarch(e){e.preventDefault();if(B.over)return;
+  B.meter+=10;
+  if(B.meter>=100){B.meter-=100;B.charges=Math.min(B.maxMeter,B.charges+1);toast('Tactic charged!');}
+  // marching also nudges your push
+  B.foe_hp-=B.youDPS*0.4;
+  syncMeter();
+}
+function syncMeter(){$('#meterfill').style.width=B.meter+'%';$('#metertxt').textContent=Math.floor(B.meter)+'% · '+B.charges+' ready';updateTacReady();}
+function castTactic(k){
+  if(B.over||B.charges<1)return;B.charges--;
+  const t=TACTICS[k];
+  if(k==='charge'){B.buffT=4;flashLog('🐎 Charge! Damage doubled');}
+  else if(k==='volley'){B.foe_hp-=B.foeMax*0.18;flashLog('🏹 Volley strikes home!');}
+  else if(k==='rally'){B.you=Math.min(B.youMax,B.you+B.youMax*0.25);flashLog('⛑️ Rally — army healed');}
+  else if(k==='bomb'){B.foe_hp-=B.foeMax*0.30;flashLog('💥 Bombard devastates the enemy!');}
+  syncMeter();drawBattle();
+}
+let logT;
+function flashLog(s){$('#blog').textContent=s;clearTimeout(logT);logT=setTimeout(()=>{if(B&&!B.over)$('#blog').textContent='';},1400);}
+function battleTick(){
+  if(!B||B.over)return;B.t+=0.1;
+  // passive meter trickle from "walking"
+  B.meter=Math.min(100,B.meter+0.6);
+  if(B.meter>=100){B.meter-=100;B.charges=Math.min(B.maxMeter,B.charges+1);}
+  const buff=B.buffT>0?2:1;if(B.buffT>0)B.buffT-=0.1;
+  if(B.stunT>0)B.stunT-=0.1;
+  B.foe_hp-=B.youDPS*buff*0.1;
+  if(B.stunT<=0)B.you-=B.foeDPS*0.1;
+  if(B.foe_hp<=0||B.you<=0){return finishBattle();}
+  syncMeter();drawBattle();
+}
+function drawBattle(){
+  const yp=clamp(B.you/B.youMax*100,0,100), fp=clamp(B.foe_hp/B.foeMax*100,0,100);
+  $('#youfill').style.width=yp+'%';$('#foefill').style.width=fp+'%';
+  $('#youhp').textContent=Math.ceil(yp)+'%';$('#foehp').textContent=Math.ceil(fp)+'%';
+  $('#clash').textContent=B.buffT>0?'🔥⚔️🔥':(B.t%1<.5?'⚔️':'🗡️');
+}
+function finishBattle(){
+  if(B.over)return;B.over=true;clearInterval(B.loop);
+  const win=B.foe_hp<=0&&B.you>0 || (B.foe_hp<=0 && B.you>B.foe_hp);
+  const won=B.foe_hp<=B.you; // higher remaining wins ties toward... use: enemy down
+  const victory=B.foe_hp<=0;
+  setTimeout(()=>showResult(victory),350);
+}
+function showResult(victory){
+  const foe=B.foe;let tro,gold,sci,steps;
+  if(victory){
+    tro=Math.round(18+foe.trophies*0.18+foe.age*4);
+    gold=Math.round(foe.power*1.2+120);
+    sci=Math.round(foe.power*0.4+30);
+    steps=Math.round(foe.power*0.6);
+    state.trophies+=tro;state.gold+=gold;state.science+=sci;state.steps+=steps;
+  }else{
+    tro=-Math.min(state.trophies,Math.round(10+foe.age*2));
+    state.trophies+=tro;gold=sci=steps=0;
+  }
+  pushScore();save();
+  $('#mbox').innerHTML=`
+    <div style="font-size:40px">${victory?'🏆':'🛡️'}</div>
+    <h3 class="cinzel" style="color:${victory?'var(--good)':'var(--bad)'}">${victory?'Victory':'Defeated'}</h3>
+    <p>${victory?`${foe.name} falls before your army.`:`${foe.name}'s defenses held. Train more troops.`}</p>
+    <div class="loot">
+      <div>🏆<br>${tro>=0?'+':''}${tro}</div>
+      ${victory?`<div>🪙<br>+${fmt(gold)}</div><div>🔬<br>+${fmt(sci)}</div><div>👣<br>+${fmt(steps)}</div>`:''}
+    </div>
+    <button class="btn go wide" onclick="closeResult()">Continue</button>`;
+  $('#modal').classList.add('show');
+}
+function closeResult(){$('#modal').classList.remove('show');endBattle(false);}
+function endBattle(silent){$('#battle').classList.remove('show');if(B){clearInterval(B.loop);B=null;}render();}
+
+/* ---- LEADERBOARD ---- */
+async function renderBoard(m){
+  m.innerHTML=`<h2 class="sec">Hall of Empires</h2><div class="empty">Loading rankings…</div>`;
+  board=await getBoard();
+  const merged=[...board];
+  if(!merged.some(x=>x.name===state.name)) merged.push({name:state.name,trophies:state.trophies,age:state.age});
+  else merged.forEach(x=>{if(x.name===state.name)x.trophies=state.trophies;});
+  // seed bots for flavour
+  BOTS.forEach(b=>{if(!merged.some(x=>x.name===b.name))merged.push({name:b.name,trophies:Math.round(b.mult*180+b.age*60),age:b.age,bot:true});});
+  merged.sort((a,b)=>b.trophies-a.trophies);
+  let h='<div class="card" style="padding:0;flex-direction:column;align-items:stretch;">';
+  merged.forEach((p,i)=>{
+    const me=p.name===state.name;
+    h+=`<div class="lbrow ${me?'me':''}">
+      <div class="rank ${i<3?'top':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div class="emoji" style="width:34px;height:34px;font-size:18px;">${p.bot?'👑':'🏰'}</div>
+      <div class="grow"><div class="name" style="font-size:13px;">${p.name}${me?' (you)':''}</div>
+      <div class="desc">${AGES[p.age]?AGES[p.age].name:'—'}</div></div>
+      <div class="tro">🏆 ${fmt(p.trophies)}</div>
+    </div>`;
+  });
+  h+='</div><p class="hint">Win battles to climb past the AI rivals. Rankings save on this device — a shared global leaderboard would need a small backend (Firebase or Supabase work well).</p>';
+  m.innerHTML=h;
+}
+
+/* ---- AGE FLASH ---- */
+function flash(msg){const t=$('#toast');t.style.maxWidth='80%';t.style.whiteSpace='normal';t.textContent=msg;t.classList.add('show');setTimeout(()=>{t.classList.remove('show');t.style.whiteSpace='nowrap';},2600);}
+
+/* ---- NAME PROMPT + BOOT ---- */
+async function boot(){
+  const saved=await loadSave();
+  if(saved){state=saved;applyIdle();}
+  else{
+    $('#main').innerHTML=`<div style="padding:30px 14px;text-align:center;">
+      <div style="font-size:52px;margin-bottom:6px;">👣🏛️</div>
+      <h2 class="cinzel" style="font-size:26px;margin:0 0 4px;color:var(--accent)">Stride Empire</h2>
+      <p style="color:var(--mut);font-size:13px;margin:0 0 22px;line-height:1.5;">Walk to build a civilization through the ages.<br>Every step fuels your empire — then march into battle.</p>
+      <input id="namein" placeholder="Name your empire" maxlength="14"
+        style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;color:var(--ink);padding:13px;font-size:15px;text-align:center;font-family:Cinzel,serif;margin-bottom:12px;">
+      <button class="btn go wide" id="startbtn">Found Empire</button>
+    </div>`;
+    return new Promise(res=>{
+      $('#startbtn').onclick=()=>{const n=($('#namein').value||'').trim()||'Walker';state=freshState(n.slice(0,14));res();};
+      $('#namein').addEventListener('keydown',e=>{if(e.key==='Enter')$('#startbtn').click();});
+    });
+  }
+}
+[...document.querySelectorAll('#nav button')].forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+
+(async()=>{ await boot(); ped.sens=state.pedSens||1.2; board=await getBoard(); await pushScore(); setTab('walk'); })();
+</script>
+</body>
+</html>
