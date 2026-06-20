@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#15172b">
+<title>Whimsy</title>
+<style>
+  :root{
+    --ink:#15172b;--ink-2:#1b1e38;--panel:#22264a;--panel-2:#2a2f57;--line:#34396b;
+    --text:#eceefb;--muted:#9aa0c8;--faint:#6a6f9c;
+    --amber:#f4b450;--amber-deep:#e09a2e;--teal:#54c7b8;--violet:#8b7ff0;
+    --parchment:#f6f1e6;--parchment-line:#e3d9c4;--ink-on-parch:#2b2620;--muted-on-parch:#7c715c;
+    --danger:#e8748a;--ok:#5fb87a;
+    --radius:18px;--radius-sm:12px;--shadow:0 18px 40px -18px rgba(0,0,0,.7);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,127,240,.16), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(84,199,184,.10), transparent 55%),
+      var(--ink);
+    color:var(--text);font-family:var(--sans);line-height:1.45;min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:560px;margin:0 auto;padding:0 16px calc(env(safe-area-inset-bottom) + 92px);}
+  header.top{padding:22px 2px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand h1{font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:.5px;margin:0;line-height:1;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);transform:translateY(-3px)}
+  .tagline{color:var(--muted);font-size:12.5px;margin:6px 2px 0;letter-spacing:.2px}
+  .icon-btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);width:42px;height:42px;border-radius:12px;cursor:pointer;display:grid;place-items:center;flex:0 0 auto;}
+  .icon-btn:active{transform:scale(.95)}
+  .icon-btn svg{width:20px;height:20px}
+
+  .seg{display:flex;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:4px;margin:6px 0 18px;position:relative;}
+  .seg button{flex:1;appearance:none;border:0;background:transparent;color:var(--muted);font-family:var(--sans);font-size:14.5px;font-weight:600;letter-spacing:.2px;padding:11px 0;border-radius:10px;cursor:pointer;transition:color .18s;z-index:1;}
+  .seg button.active{color:var(--ink)}
+  .seg .glide{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);background:linear-gradient(180deg,var(--amber),var(--amber-deep));border-radius:10px;transition:transform .26s cubic-bezier(.2,.8,.2,1);box-shadow:0 6px 16px -6px rgba(244,180,80,.6);}
+  .seg[data-mode="list"] .glide{transform:translateX(100%)}
+
+  .view{display:none}
+  .view.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ROLL */
+  .stage{position:relative;min-height:268px;display:grid;place-items:center;margin:4px 0 6px;}
+  .results{width:100%;max-width:340px;margin:0 auto;position:relative}
+  .results.multi{max-width:392px;display:flex;flex-direction:column;gap:11px}
+  .deck{position:relative;width:100%}
+  .deck .shadow-card{position:absolute;left:50%;top:8px;width:92%;height:100%;border-radius:var(--radius);background:#cabfa6;transform:translateX(-50%) rotate(-3deg);opacity:.5;}
+  .deck .shadow-card.two{transform:translateX(-50%) rotate(3deg);top:5px;opacity:.35;background:#bdb198}
+  .card{
+    position:relative;background:var(--parchment);
+    background-image:radial-gradient(circle at 20% 12%, rgba(0,0,0,.025), transparent 40%),radial-gradient(circle at 85% 90%, rgba(0,0,0,.03), transparent 45%);
+    color:var(--ink-on-parch);border-radius:var(--radius);border:1px solid var(--parchment-line);
+    padding:22px 20px;min-height:248px;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  }
+  .card .corner{position:absolute;top:12px;right:14px;font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted-on-parch);text-transform:uppercase;}
+  .card .cat-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted-on-parch);}
+  .card .cat-tag .swatch{width:9px;height:9px;border-radius:3px;background:var(--faint)}
+  .card .title{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.12;margin:14px 0 2px;color:var(--ink-on-parch);}
+  .card .meta{margin-top:auto;display:flex;flex-wrap:wrap;gap:8px;padding-top:14px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;background:#efe7d4;color:#6a5f49;border:1px solid var(--parchment-line);padding:6px 10px;border-radius:999px;}
+  .pill svg{width:13px;height:13px;opacity:.8}
+  .card .notes{font-size:13.5px;color:#5f5645;margin-top:10px;line-height:1.5}
+  .card-foot{margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .card-foot:empty{margin:0}
+  .done-mini,.card-link{appearance:none;border:1px solid var(--parchment-line);background:#efe7d4;color:#6a5f49;font-weight:700;font-size:12.5px;padding:8px 14px;border-radius:999px;cursor:pointer;font-family:var(--sans);text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .card-link svg{width:13px;height:13px;opacity:.85}
+  .done-mini:active,.card-link:active{transform:scale(.97)}
+  .done-mini.is-done{color:var(--ok);border-color:rgba(95,184,122,.5);background:rgba(95,184,122,.14);cursor:default}
+  .card.mini .done-mini,.card.mini .card-link{font-size:11.5px;padding:7px 11px}
+  .card.empty-card{align-items:center;justify-content:center;text-align:center;color:var(--muted-on-parch)}
+  .card.empty-card .title{color:var(--muted-on-parch);font-size:21px}
+  .card.placeholder{opacity:.55}
+  .card.landed{animation:pop .5s cubic-bezier(.2,1.4,.3,1)}
+  @keyframes pop{0%{transform:scale(.94)}55%{transform:scale(1.03)}100%{transform:scale(1)}}
+  .card.spinning .title{filter:blur(.4px)}
+  .card.lit{box-shadow:0 0 32px 1px rgba(244,180,80,.45),var(--shadow)}
+  /* mini (group roll) */
+  .card.mini{min-height:auto;padding:15px 16px}
+  .card.mini .title{font-size:19px;margin:10px 0 2px}
+  .card.mini .notes{font-size:12.5px;margin-top:7px}
+  .card.mini .meta{padding-top:11px;gap:6px}
+  .card.mini .pill{font-size:11.5px;padding:5px 9px}
+  .card.mini .corner{font-size:10px}
+  .card.mini .card-foot{margin-top:11px}
+
+  .pickrow{display:flex;align-items:center;gap:12px;margin:2px 0 12px}
+  .pick-label{font-size:12.5px;color:var(--muted);font-weight:600;flex:0 0 auto;letter-spacing:.2px}
+  .pickrow .seg2{flex:1}
+
+  .roll-actions{display:flex;gap:10px;margin:2px 0 4px}
+  .btn{appearance:none;border:0;cursor:pointer;font-family:var(--sans);font-weight:700;border-radius:14px;padding:15px 18px;font-size:16px;letter-spacing:.2px;display:inline-flex;align-items:center;justify-content:center;gap:9px;}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-primary{flex:1;color:var(--ink);background:linear-gradient(180deg,var(--amber),var(--amber-deep));box-shadow:0 12px 26px -12px rgba(244,180,80,.8);}
+  .btn-ghost{background:var(--panel);color:var(--text);border:1px solid var(--line);}
+  .btn-ghost.wide{flex:1}
+  .matchline{text-align:center;color:var(--faint);font-size:12.5px;margin:8px 0 16px;font-family:var(--mono);letter-spacing:.3px}
+
+  .constraints{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:6px 16px 16px;margin-top:6px;}
+  .c-head{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;cursor:pointer;user-select:none;}
+  .c-head h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:0;font-weight:700}
+  .c-head .chev{transition:transform .25s;color:var(--faint)}
+  .constraints.collapsed .chev{transform:rotate(-90deg)}
+  .constraints.collapsed .c-body{display:none}
+  .c-row{padding:13px 0;border-top:1px solid var(--line)}
+  .c-row:first-child{border-top:0}
+  .c-label{font-size:13px;color:var(--muted);margin-bottom:9px;font-weight:600;display:flex;justify-content:space-between}
+  .c-label .reset{color:var(--faint);font-size:11.5px;cursor:pointer;font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+  .chip .swatch{width:9px;height:9px;border-radius:3px;background:var(--faint)}
+  .chip.on{background:var(--panel-2);color:var(--text);border-color:var(--faint)}
+  .chip.on.amber{background:rgba(244,180,80,.16);border-color:var(--amber);color:var(--amber)}
+  input.text,input[type="date"],input[type="number"],textarea,select{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:var(--sans);font-size:15px;border-radius:12px;padding:13px 13px;}
+  input.text::placeholder,input[type="number"]::placeholder,textarea::placeholder{color:var(--faint)}
+  input:focus,textarea:focus,select:focus,.chip:focus-visible,.btn:focus-visible,.icon-btn:focus-visible,.seg button:focus-visible,.done-mini:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  input[type="date"]{color-scheme:dark}
+
+  .toolbar{display:flex;gap:10px;margin:0 0 14px}
+  .search{position:relative;flex:1}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--faint)}
+  .search input{padding-left:38px}
+  select.sort{flex:0 0 auto;width:auto;padding:13px 30px 13px 13px;font-size:13.5px;color:var(--muted);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239aa0c8' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+  .count-head{color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.4px;margin:0 2px 10px;text-transform:uppercase}
+  .alist{display:flex;flex-direction:column;gap:10px}
+  .arow{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 15px;cursor:pointer;display:flex;gap:13px;align-items:flex-start;transition:border-color .15s,transform .05s;}
+  .arow:active{transform:scale(.995)}
+  .arow .bar{width:4px;align-self:stretch;border-radius:3px;background:var(--faint);flex:0 0 auto}
+  .arow .body{flex:1;min-width:0}
+  .arow .name{font-size:16px;font-weight:600;margin:0 0 5px;color:var(--text)}
+  .arow .sub{display:flex;flex-wrap:wrap;gap:6px 13px;color:var(--muted);font-size:12.5px}
+  .arow .sub span{display:inline-flex;align-items:center;gap:5px}
+  .arow .sub svg{width:13px;height:13px;opacity:.75;flex:0 0 auto}
+  .arow .sub a.sublink{display:inline-flex;align-items:center;gap:5px;color:var(--amber);text-decoration:none;font-weight:600}
+  .arow .done-badge{flex:0 0 auto;align-self:center;font-size:11px;font-weight:700;color:var(--ok);background:rgba(95,184,122,.14);border:1px solid rgba(95,184,122,.4);padding:3px 8px;border-radius:999px;display:flex;align-items:center;gap:4px;}
+  .dateflag{color:var(--amber)!important}
+  .dateflag.past{color:var(--danger)!important}
+
+  .empty{text-align:center;padding:42px 20px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--radius);background:rgba(255,255,255,.012);}
+  .empty .em-ico{font-size:34px;margin-bottom:8px}
+  .empty h3{font-family:var(--serif);font-weight:600;color:var(--text);margin:0 0 6px;font-size:20px}
+  .empty p{margin:0 auto 16px;max-width:300px;font-size:14px;line-height:1.5}
+  .empty .btn{display:inline-flex;margin:0 4px}
+
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:38;background:linear-gradient(180deg,var(--amber),var(--amber-deep));color:var(--ink);border:0;border-radius:16px;padding:14px 22px;font-family:var(--sans);font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 16px 30px -12px rgba(244,180,80,.8);display:flex;align-items:center;gap:8px;}
+  .fab:active{transform:translateX(-50%) scale(.97)}
+  .fab svg{width:18px;height:18px}
+
+  .scrim{position:fixed;inset:0;background:rgba(7,8,18,.6);backdrop-filter:blur(3px);z-index:40;display:none;align-items:flex-end;justify-content:center;}
+  .scrim.open{display:flex;animation:fade .2s ease}
+  .sheet{width:100%;max-width:560px;background:var(--ink-2);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;padding:8px 16px calc(env(safe-area-inset-bottom) + 20px);max-height:92vh;overflow:auto;animation:rise .28s cubic-bezier(.2,.8,.2,1);}
+  @keyframes rise{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+  .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 14px}
+  .sheet h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0 0 16px;padding:0 2px}
+  .field{margin-bottom:15px}
+  .field > label{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:0 2px 7px;letter-spacing:.2px}
+  .field .opt{color:var(--faint);font-weight:500}
+  .date-wrap{display:flex;gap:9px}
+  .date-wrap input{flex:1}
+  .seg2{display:flex;gap:7px;flex-wrap:wrap}
+  .seg2 .chip{flex:1;justify-content:center;min-width:60px}
+  .sheet-actions{display:flex;gap:10px;margin-top:8px}
+  .err{color:var(--danger);font-size:12.5px;margin:-9px 2px 12px;display:none}
+  .err.show{display:block}
+  .link-danger{background:transparent;border:0;color:var(--danger);font-weight:700;cursor:pointer;font-size:14px;padding:13px}
+
+  .settings-list{display:flex;flex-direction:column;gap:2px}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 2px;border-top:1px solid var(--line)}
+  .set-row:first-child{border-top:0}
+  .set-row .label{font-size:15px;font-weight:600}
+  .set-row .desc{font-size:12.5px;color:var(--faint);margin-top:2px}
+  .switch{width:50px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--panel);position:relative;cursor:pointer;flex:0 0 auto;transition:background .2s}
+  .switch .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--faint);transition:.2s}
+  .switch.on{background:rgba(244,180,80,.25);border-color:var(--amber)}
+  .switch.on .knob{left:25px;background:var(--amber)}
+  .set-btn{appearance:none;background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:var(--sans);font-weight:600;font-size:14px;padding:11px 14px;border-radius:11px;cursor:pointer}
+  .sync-row{align-items:flex-start}
+  .sync-badge{font-size:10.5px;font-weight:700;font-family:var(--mono);letter-spacing:.4px;color:var(--faint);text-transform:uppercase;margin-left:6px}
+  .sync-badge.ok{color:var(--ok)}
+  .sync-badge.err{color:var(--danger)}
+  #fbConfig{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12.5px;border-radius:12px;padding:12px;resize:vertical;line-height:1.5}
+  .pk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .pk-all{color:var(--amber);font-size:13px;font-weight:700;cursor:pointer}
+  .pk-note{font-size:12px;color:var(--faint);font-family:var(--mono);letter-spacing:.3px;margin:0 2px 12px}
+  .pk-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto;margin:0 -4px;padding:0 4px}
+  .pk-row{display:flex;gap:11px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;cursor:pointer}
+  .pk-row.on{border-color:var(--amber);background:rgba(244,180,80,.08)}
+  .pk-check{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);flex:0 0 auto;display:grid;place-items:center;color:var(--ink);font-size:14px;font-weight:800}
+  .pk-row.on .pk-check{background:var(--amber);border-color:var(--amber)}
+  .pk-row .bar{width:4px;align-self:stretch;border-radius:3px;background:var(--faint);flex:0 0 auto}
+  .pk-row .body{flex:1;min-width:0}
+  .pk-row .name{font-size:15px;font-weight:600;margin-bottom:3px}
+  .pk-row .sub{display:flex;flex-wrap:wrap;gap:5px 11px;color:var(--muted);font-size:12px}
+  .pk-row .sub .rt{color:#d9a93f}
+  .pk-empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;width:max-content}
+  .stepper button{appearance:none;border:0;background:var(--panel);color:var(--text);font-size:22px;font-weight:700;width:48px;height:48px;cursor:pointer;font-family:var(--sans);line-height:1}
+  .stepper button:active{background:var(--panel-2)}
+  .stepper button:disabled{opacity:.35;cursor:default}
+  .stepper .val{min-width:58px;text-align:center;font-weight:700;font-size:16px;font-family:var(--mono);height:48px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(env(safe-area-inset-bottom) + 138px);z-index:60;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.28s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:560px;display:flex;background:rgba(21,23,43,.93);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:7px 6px calc(env(safe-area-inset-bottom) + 7px);z-index:37;}
+  .nav button{flex:1;appearance:none;border:0;background:transparent;color:var(--faint);display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1px;}
+  .nav button svg{width:21px;height:21px}
+  .nav button.active{color:var(--amber)}
+  .nav button:active{transform:scale(.94)}
+  .view-title{font-family:var(--serif);font-weight:600;font-size:23px;margin:6px 2px 10px;}
+  #planAct,#logAct{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:var(--sans);font-size:15px;border-radius:12px;padding:13px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239aa0c8' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;}
+  input[type="datetime-local"]{color-scheme:dark}
+  .group-head{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);font-weight:700;margin:18px 2px 9px;font-family:var(--mono);}
+  .group-head.first{margin-top:4px}
+  .group-head.overdue{color:var(--danger)}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
+  .pcard .bar{width:4px;align-self:stretch;border-radius:3px;background:var(--faint);flex:0 0 auto}
+  .pcard .pbody{flex:1;min-width:0}
+  .pcard .pname{font-size:15.5px;font-weight:600;margin:0 0 4px}
+  .pcard .pwhen{font-size:12.5px;color:var(--amber);font-weight:600;display:flex;align-items:center;gap:5px}
+  .pcard .pwhen.over{color:var(--danger)}
+  .pcard .pnote{font-size:12.5px;color:var(--muted);margin-top:5px}
+  .pcard .pacts{display:flex;flex-direction:column;gap:7px;flex:0 0 auto}
+  .pmini{appearance:none;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font-family:var(--sans);font-weight:700;font-size:12px;padding:7px 11px;border-radius:9px;cursor:pointer;white-space:nowrap}
+  .pmini.go{background:rgba(95,184,122,.16);border-color:rgba(95,184,122,.5);color:var(--ok)}
+  .pmini:active{transform:scale(.96)}
+  .lrow{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:9px;display:flex;gap:11px;align-items:center;}
+  .lrow .ldot{width:10px;height:10px;border-radius:3px;flex:0 0 auto;align-self:flex-start;margin-top:4px}
+  .lrow .lbody{flex:1;min-width:0}
+  .lrow .lname{font-size:14.5px;font-weight:600}
+  .lrow .ltime{font-size:12px;color:var(--faint);font-family:var(--mono);margin-top:2px}
+  .lrow .lcount{font-size:12px;color:var(--muted);font-weight:700;font-family:var(--mono)}
+  .lx{appearance:none;border:0;background:transparent;color:var(--faint);font-size:18px;cursor:pointer;padding:4px 6px;flex:0 0 auto;line-height:1}
+  .lx:active{color:var(--danger)}
+  .ltimes{font-size:11.5px;color:var(--faint);font-family:var(--mono);margin-top:5px;line-height:1.7}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+  .cal-head h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0;text-align:center;flex:1}
+  .cal-arrow{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);width:42px;height:42px;border-radius:11px;font-size:22px;cursor:pointer;flex:0 0 auto;line-height:1}
+  .cal-arrow:active{transform:scale(.94)}
+  .cal-grid .cal-wd{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:7px}
+  .cal-grid .cal-wd span{text-align:center;font-size:11px;font-weight:700;color:var(--faint);font-family:var(--mono)}
+  .cal-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-cell{position:relative;appearance:none;border:1.5px solid transparent;background:var(--ink-2);border-radius:10px;min-height:54px;padding:6px 0 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text);font-family:var(--sans)}
+  .cal-cell.empty{background:transparent;cursor:default}
+  .cal-cell.out{opacity:.32}
+  .cal-cell .cnum{font-size:13px;font-weight:600;line-height:1}
+  .cal-cell.today{border-color:var(--amber)}
+  .cal-cell.today .cnum{color:var(--amber)}
+  .cal-cell.sel{background:var(--panel-2);border-color:var(--faint)}
+  .cal-cell .cdots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:8px;max-width:84%}
+  .cal-cell .cd{width:6px;height:6px;border-radius:2px}
+  .cal-cell .cmore{font-size:9px;color:var(--faint);font-weight:700;line-height:1}
+  .cal-cell.has-plan::after{content:'';position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;border:1.6px solid var(--amber)}
+  .cal-legend{display:flex;gap:16px;justify-content:center;align-items:center;margin:14px 0 2px;font-size:11.5px;color:var(--faint)}
+  .cal-legend span{display:inline-flex;align-items:center;gap:6px}
+  .lg-dot{width:8px;height:8px;border-radius:2px}
+  .lg-dot.done{background:var(--teal)}
+  .lg-dot.plan{border-radius:50%;background:transparent;border:1.6px solid var(--amber)}
+  .cal-today-link{color:var(--amber);font-weight:700;cursor:pointer}
+  .cal-day-title{font-family:var(--serif);font-size:18px;font-weight:600;margin:20px 2px 11px;display:flex;align-items:center;justify-content:space-between}
+  .cal-day-title .add-log{font-family:var(--sans);font-size:12.5px;font-weight:700;color:var(--amber);cursor:pointer;border:1px solid rgba(244,180,80,.4);background:rgba(244,180,80,.1);padding:7px 12px;border-radius:9px}
+  .lrow.tappable{cursor:pointer}
+  .stars-input{display:flex;gap:4px}
+  .stars-input button{appearance:none;border:0;background:transparent;cursor:pointer;font-size:32px;line-height:1;color:var(--line);padding:2px 2px}
+  .stars-input button.on{color:var(--amber)}
+  .stars-input button:active{transform:scale(.88)}
+  .card .stars{color:#caa24a;font-size:17px;letter-spacing:3px;margin-top:9px}
+  .card.mini .stars{font-size:14px;letter-spacing:2px;margin-top:6px}
+  .card .stars:empty{display:none}
+  .arow .sub .rt{color:#d9a93f;letter-spacing:1px}
+  .pbar{height:9px;background:var(--ink);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0}
+  .pbar span{display:block;height:100%;background:linear-gradient(90deg,var(--amber-deep),var(--amber));border-radius:6px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .season-card{background:linear-gradient(160deg,var(--panel-2),var(--ink-2));border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:6px;position:relative;overflow:hidden}
+  .season-card::after{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(244,180,80,.16),transparent 70%)}
+  .season-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;position:relative}
+  .season-label{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:700;font-family:var(--mono)}
+  .season-rank{font-family:var(--serif);font-size:26px;font-weight:600;margin-top:3px}
+  .season-xp{text-align:right}
+  .season-xp .big{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--amber);line-height:1}
+  .season-xp .sub{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+  .season-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px;font-weight:600}
+  .q-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 2px 11px}
+  .q-head h3{font-family:var(--serif);font-size:18px;font-weight:600;margin:0}
+  .q-head span{font-size:11.5px;color:var(--faint);font-family:var(--mono);font-weight:600}
+  .q-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px}
+  .q-card.done{border-color:rgba(95,184,122,.45);background:rgba(95,184,122,.07)}
+  .q-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .q-title{font-size:14.5px;font-weight:600}
+  .q-card.done .q-title{color:var(--ok)}
+  .q-xp{font-size:12.5px;font-weight:800;color:var(--amber);font-family:var(--mono);flex:0 0 auto;margin-left:10px}
+  .q-prog{font-size:11px;color:var(--faint);font-family:var(--mono);margin-top:6px;text-align:right}
+  .a-row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:8px;opacity:.62}
+  .a-row.on{opacity:1;border-color:rgba(244,180,80,.35)}
+  .a-ico{font-size:22px;width:30px;text-align:center;flex:0 0 auto;filter:grayscale(1)}
+  .a-row.on .a-ico{filter:none}
+  .a-body{flex:1;min-width:0}
+  .a-name{font-size:14.5px;font-weight:700}
+  .a-xp{font-size:11px;color:var(--amber);font-family:var(--mono);font-weight:700}
+  .a-desc{font-size:12px;color:var(--muted);margin-top:1px}
+  .a-check{color:var(--ok);font-size:18px;font-weight:800;flex:0 0 auto}
+  .a-lock{opacity:.5;flex:0 0 auto}
+  .share-preview{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+  .sp-card{display:flex;gap:11px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 13px}
+  .sp-bar{width:4px;border-radius:3px;flex:0 0 auto;align-self:stretch;background:var(--faint)}
+  .sp-body{flex:1;min-width:0}
+  .sp-name{font-size:15.5px;font-weight:600}
+  .sp-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .sp-note{font-size:12.5px;color:var(--faint);margin-top:4px}
+  .sp-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+  .sp-links a{display:inline-flex;align-items:center;gap:5px;color:var(--amber);text-decoration:none;font-weight:600;font-size:12.5px}
+  .sp-links a svg{width:13px;height:13px}
+  .share-text{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:12px;border-radius:12px;padding:12px;resize:vertical;line-height:1.55;margin-bottom:4px}
+
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;transition-duration:.05ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="brand"><h1>Whimsy</h1><span class="dot"></span></div>
+      <div class="tagline">A list of things worth doing — and a fair way to pick one.</div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings and data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </header>
+
+  <section class="view active" id="view-roll">
+    <div class="stage"><div class="results" id="results"></div></div>
+    <div class="matchline" id="matchLine">—</div>
+    <div class="pickrow">
+      <span class="pick-label">Draw</span>
+      <div class="seg2 chips" id="pickPick"></div>
+    </div>
+    <div class="roll-actions">
+      <button class="btn btn-primary" id="rollBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="16" cy="16" r="1.4" fill="currentColor"/><circle cx="16" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="16" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>
+        Roll
+      </button>
+      <button class="btn btn-ghost" id="shareBtn" style="display:none">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Share
+      </button>
+    </div>
+    <button class="btn btn-ghost" id="pickBtn" style="width:100%;margin-top:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+      Pick activities yourself
+    </button>
+
+    <div class="constraints" id="constraints">
+      <div class="c-head" id="cHead">
+        <h2>Constraints</h2>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="c-body">
+        <div class="c-row">
+          <div class="c-label"><span>Category</span><span class="reset" data-reset="cats">Any</span></div>
+          <div class="chips" id="fCats"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Meal</span></div>
+          <div class="chips" id="fMeal"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>When</span></div>
+          <div class="chips" id="fWhen"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Cost — up to</span></div>
+          <div class="chips" id="fCost"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Time needed — up to</span></div>
+          <div class="chips" id="fDur"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Distance — up to</span></div>
+          <div class="chips" id="fDistChips"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Rating — at least</span></div>
+          <div class="chips" id="fRating"></div>
+        </div>
+        <div class="c-row">
+          <div class="c-label"><span>Location contains</span><span class="reset" data-reset="loc">Clear</span></div>
+          <input class="text" id="fLoc" type="text" placeholder="e.g. Bethesda, downtown, home" autocomplete="off">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-list">
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="text" id="searchInput" type="text" placeholder="Search activities" autocomplete="off">
+      </div>
+      <select class="sort" id="sortSel">
+        <option value="recent">Newest</option>
+        <option value="name">A–Z</option>
+        <option value="cat">Category</option>
+        <option value="date">By date</option>
+        <option value="dist">By distance</option>
+        <option value="rating">By rating</option>
+      </select>
+    </div>
+    <div class="count-head" id="countHead"></div>
+    <div class="alist" id="alist"></div>
+  </section>
+
+  <section class="view" id="view-plan">
+    <h2 class="view-title">Plans</h2>
+    <div class="count-head" id="planCount"></div>
+    <div id="planList"></div>
+  </section>
+
+  <section class="view" id="view-cal">
+    <div class="cal-head">
+      <button class="cal-arrow" id="calPrev" aria-label="Previous month">‹</button>
+      <h2 id="calMonth"></h2>
+      <button class="cal-arrow" id="calNext" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><span class="lg-dot done"></span>Done</span>
+      <span><span class="lg-dot plan"></span>Planned</span>
+      <span class="cal-today-link" id="calToday">Jump to today</span>
+    </div>
+    <div id="calDay"></div>
+  </section>
+
+  <section class="view" id="view-log">
+    <h2 class="view-title">History</h2>
+    <div class="pickrow" style="margin-top:0">
+      <span class="pick-label">Group by</span>
+      <div class="seg2 chips" id="logGroupPick"></div>
+    </div>
+    <div class="count-head" id="logCount"></div>
+    <div id="logList"></div>
+  </section>
+
+  <section class="view" id="view-quest">
+    <h2 class="view-title">Quest</h2>
+    <div id="questBody"></div>
+  </section>
+</div>
+
+<nav class="nav" id="nav">
+  <button data-view="roll" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>Roll</button>
+  <button data-view="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Plan</button>
+  <button data-view="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v3M16 2v3"/><rect x="7" y="13" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/><rect x="14" y="13" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/></svg>Cal</button>
+  <button data-view="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>List</button>
+  <button data-view="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Log</button>
+  <button data-view="quest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M17 5h2.5a1.5 1.5 0 0 1 0 5H17M7 5H4.5a1.5 1.5 0 0 0 0 5H7"/></svg>Quest</button>
+</nav>
+
+<button class="fab" id="fab" style="display:none">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+  Add activity
+</button>
+
+<div class="scrim" id="editScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Activity details">
+    <div class="grab"></div>
+    <h2 id="editTitle">Add activity</h2>
+    <div class="field">
+      <label for="fName">Name</label>
+      <input class="text" id="fName" type="text" placeholder="What is it?" autocomplete="off">
+      <div class="err" id="nameErr">Give it a name first.</div>
+    </div>
+    <div class="field">
+      <label for="fPlace">Location <span class="opt">· optional</span></label>
+      <input class="text" id="fPlace" type="text" placeholder="Where is it? (try “Home”)" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fAddr">Address <span class="opt">· optional · opens in Maps</span></label>
+      <input class="text" id="fAddr" type="text" placeholder="Street address" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fDist">Distance <span class="opt">· optional · miles away</span></label>
+      <input class="text" id="fDist" type="number" inputmode="decimal" min="0" step="0.5" placeholder="e.g. 5">
+    </div>
+    <div class="field">
+      <label for="fDate">Date <span class="opt">· optional — leave blank for anytime</span></label>
+      <div class="date-wrap">
+        <input id="fDate" type="date">
+        <button class="set-btn" id="clearDate" type="button">Clear</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <div class="seg2 chips" id="fCatPick"></div>
+    </div>
+    <div class="field" id="mealsField" style="display:none">
+      <label>Serves <span class="opt">· for places to eat</span></label>
+      <div class="seg2 chips" id="fMealsPick"></div>
+    </div>
+    <div class="field">
+      <label>Cost</label>
+      <div class="seg2 chips" id="fCostPick"></div>
+    </div>
+    <div class="field">
+      <label>Time needed <span class="opt">· optional</span></label>
+      <div class="seg2 chips" id="fDurPick"></div>
+    </div>
+    <div class="field">
+      <label>Your rating <span class="opt">· tap a star again to clear</span></label>
+      <div class="stars-input" id="fRatingPick"></div>
+    </div>
+    <div class="field">
+      <label for="fNotes">Notes <span class="opt">· optional</span></label>
+      <textarea id="fNotes" rows="2" placeholder="Anything to remember"></textarea>
+    </div>
+    <div class="field">
+      <label for="fWeb">Website <span class="opt">· optional</span></label>
+      <input class="text" id="fWeb" type="url" inputmode="url" placeholder="example.com" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fIg">Instagram <span class="opt">· optional</span></label>
+      <input class="text" id="fIg" type="text" placeholder="@handle" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Times done <span class="opt">· tap − to undo</span></label>
+      <div class="stepper" id="doneStepper">
+        <button type="button" id="doneMinus" aria-label="Decrease">−</button>
+        <div class="val" id="doneVal">0</div>
+        <button type="button" id="donePlus" aria-label="Increase">+</button>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost wide" id="cancelEdit">Cancel</button>
+      <button class="btn btn-primary" id="saveEdit">Save</button>
+    </div>
+    <div style="text-align:center"><button class="link-danger" id="deleteAct" style="display:none">Delete activity</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="planScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Plan an activity">
+    <div class="grab"></div>
+    <h2 id="planTitle">Plan an activity</h2>
+    <div class="field">
+      <label for="planAct">Activity</label>
+      <select id="planAct"></select>
+      <div class="err" id="planErr">Add an activity first, then plan it.</div>
+    </div>
+    <div class="field">
+      <label for="planAt">When</label>
+      <input id="planAt" type="datetime-local">
+    </div>
+    <div class="field">
+      <label for="planNote">Note <span class="opt">· optional</span></label>
+      <input class="text" id="planNote" type="text" placeholder="Who with, details…" autocomplete="off">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost wide" id="cancelPlan">Cancel</button>
+      <button class="btn btn-primary" id="savePlan">Save plan</button>
+    </div>
+    <div style="text-align:center"><button class="link-danger" id="deletePlan" style="display:none">Remove plan</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="logScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Log a completion">
+    <div class="grab"></div>
+    <h2 id="logTitle">Log a completion</h2>
+    <div class="field">
+      <label for="logAct">Activity</label>
+      <select id="logAct"></select>
+      <div class="err" id="logErr">Add an activity first.</div>
+    </div>
+    <div class="field">
+      <label for="logAt">When you did it</label>
+      <input id="logAt" type="datetime-local">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost wide" id="cancelLog">Cancel</button>
+      <button class="btn btn-primary" id="saveLogBtn">Save</button>
+    </div>
+    <div style="text-align:center"><button class="link-danger" id="deleteLogBtn" style="display:none">Delete entry</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="shareScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Share picks">
+    <div class="grab"></div>
+    <h2 id="shareTitle">Share pick</h2>
+    <div class="share-preview" id="sharePreview"></div>
+    <label style="display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:0 2px 7px">Message</label>
+    <textarea class="share-text" id="shareText" rows="6" readonly></textarea>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost wide" id="copyShare">Copy message</button>
+      <button class="btn btn-primary" id="nativeShare">Share…</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="setScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Settings and data">
+    <div class="grab"></div>
+    <h2>Settings &amp; data</h2>
+    <div class="settings-list">
+      <div class="set-row sync-row">
+        <div style="flex:1"><div class="label">Cloud sync <span class="sync-badge" id="syncBadge"></span></div><div class="desc" id="syncDesc">Sign in to sync across devices</div>
+          <div id="syncControls" style="margin-top:11px"></div>
+        </div>
+      </div>
+      <div class="set-row">
+        <div><div class="label">Sound</div><div class="desc">Ticks and a chime when you roll</div></div>
+        <div class="switch" id="soundSwitch"><div class="knob"></div></div>
+      </div>
+      <div class="set-row">
+        <div><div class="label">Back up your list</div><div class="desc">Download everything as a file</div></div>
+        <button class="set-btn" id="exportBtn">Export</button>
+      </div>
+      <div class="set-row">
+        <div><div class="label">Restore from a backup</div><div class="desc">Load a previously exported file</div></div>
+        <button class="set-btn" id="importBtn">Import</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="set-row">
+        <div><div class="label">Start over</div><div class="desc">Remove every saved activity</div></div>
+        <button class="set-btn" id="clearBtn" style="color:var(--danger);border-color:rgba(232,116,138,.4)">Clear all</button>
+      </div>
+    </div>
+    <div class="sheet-actions" style="margin-top:18px">
+      <button class="btn btn-ghost wide" id="closeSet">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="pickScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Pick activities">
+    <div class="grab"></div>
+    <div class="pk-head">
+      <h2 style="margin:0">Pick activities</h2>
+      <span class="pk-all" id="pkAll">Select all</span>
+    </div>
+    <div class="pk-note" id="pkNote">Using your roll constraints</div>
+    <div class="search" style="margin-bottom:12px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input class="text" id="pkSearch" type="text" placeholder="Search within matches" autocomplete="off">
+    </div>
+    <div class="pk-list" id="pkList"></div>
+    <div class="sheet-actions" style="margin-top:14px">
+      <button class="btn btn-ghost wide" id="pkCancel">Cancel</button>
+      <button class="btn btn-primary" id="pkShare" disabled>Share</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="fbScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Connect Firebase">
+    <div class="grab"></div>
+    <h2>Connect Firebase</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.55;margin:0 2px 14px">Create a free Firebase project, enable <b>Authentication</b> (Google and/or Email) and <b>Firestore</b>, then paste your web app config below. It's saved on this device only.</p>
+    <div class="field">
+      <label for="fbConfig">Firebase config</label>
+      <textarea id="fbConfig" rows="9" placeholder="{&#10;  apiKey: &quot;...&quot;,&#10;  authDomain: &quot;your-app.firebaseapp.com&quot;,&#10;  projectId: &quot;your-app&quot;,&#10;  appId: &quot;...&quot;&#10;}"></textarea>
+      <div class="err" id="fbCfgErr">That doesn't look like a Firebase config — make sure it includes apiKey and projectId.</div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost wide" id="fbCfgCancel">Cancel</button>
+      <button class="btn btn-primary" id="fbCfgSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+  var mem={};
+  var Store={
+    get:async function(key){
+      try{ if(window.storage&&window.storage.get){ var r=await window.storage.get(key); return r?r.value:null; } }catch(e){}
+      try{ var v=localStorage.getItem(key); if(v!==null) return v; }catch(e){}
+      return (key in mem)?mem[key]:null;
+    },
+    set:async function(key,val){
+      try{ if(window.storage&&window.storage.set){ await window.storage.set(key,val); return; } }catch(e){}
+      try{ localStorage.setItem(key,val); return; }catch(e){}
+      mem[key]=val;
+    }
+  };
+  var DATA_KEY='whim.activities.v1', PREF_KEY='whim.prefs.v1', PLANS_KEY='whim.plans.v1', LOG_KEY='whim.log.v1', GAME_KEY='whim.game.v1', FBCFG_KEY='whim.fbcfg.v1', FBSYNC_KEY='whim.fbsynced.v1';
+
+  var CATS=[
+    {id:'outdoors',label:'Outdoors',color:'#5fb87a'},
+    {id:'food',label:'Food',color:'#f4b450'},
+    {id:'drinks',label:'Drinks',color:'#b5485f'},
+    {id:'games',label:'Games',color:'#8b7ff0'},
+    {id:'fitness',label:'Fitness',color:'#54c7b8'},
+    {id:'sports',label:'Sports',color:'#3fb6e0'},
+    {id:'culture',label:'Culture',color:'#e07b9a'},
+    {id:'entertainment',label:'Entertainment',color:'#e8734d'},
+    {id:'social',label:'Social',color:'#6aa6f0'},
+    {id:'other',label:'Other',color:'#9aa0c8'}
+  ];
+  var CATMAP={}; CATS.forEach(function(c){CATMAP[c.id]=c;});
+  var COSTS=['Free','$','$$','$$$'];
+  var DURS=[{id:'quick',label:'< 1 hr',rank:0},{id:'short',label:'1–2 hrs',rank:1},{id:'half',label:'Half day',rank:2},{id:'full',label:'Full day',rank:3}];
+  var DURMAP={}; DURS.forEach(function(d){DURMAP[d.id]=d;});
+  function durRank(id){ return DURMAP[id]?DURMAP[id].rank:-1; }
+  var WHEN=[{id:'any',label:'Whenever'},{id:'today',label:'Today'},{id:'weekend',label:'This weekend'},{id:'anytime',label:'No fixed date'},{id:'dated',label:'Has a date'}];
+  var DISTS=[{v:2,label:'≤ 2 mi'},{v:10,label:'≤ 10 mi'},{v:25,label:'≤ 25 mi'},{v:Infinity,label:'Any'}];
+
+  var activities=[];
+  var plans=[], log=[], game={unlockedAch:{},questDone:{}};
+  var curView='roll', logGroup='time', planActivityId=null, editingPlanId=null;
+  var calY, calM, calSel=null, editingLogId=null;
+  var CS={cfg:null,user:null,app:null,auth:null,db:null,_auth:null,_fs:null,unsub:null,lastPush:null,lastAppliedAt:0,pushT:null,err:null};
+  var suppressPush=false, FB_VER='https://www.gstatic.com/firebasejs/12.14.0/';
+  var prefs={sound:true};
+  var filters={cats:[],when:'any',maxCost:3,maxDur:'full',maxDist:Infinity,loc:'',meal:'',minRating:0};
+  var editingId=null, lastPicked=null, rolling=false, pickCount=1;
+  var draft={cat:'other',cost:0,dur:'',done:0,meals:[],rating:0};
+  var MEALS=[{id:'breakfast',label:'Breakfast'},{id:'lunch',label:'Lunch'},{id:'dinner',label:'Dinner'}];
+
+  function $(id){return document.getElementById(id);}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function find(id){ for(var i=0;i<activities.length;i++) if(activities[i].id===id) return activities[i]; return null; }
+  function hasDist(a){ return a.dist!=null && a.dist!==''; }
+  function fmtDist(d){ var n=Number(d); if(!isFinite(n)) return ''; return (n%1===0?n:n.toFixed(1))+' mi'; }
+  function todayMid(){var d=new Date();d.setHours(0,0,0,0);return d;}
+  function parseDate(s){ if(!s) return null; var p=s.split('-'); if(p.length!==3) return null; var d=new Date(+p[0],+p[1]-1,+p[2]); d.setHours(0,0,0,0); return isNaN(d)?null:d; }
+  function fmtDate(s){
+    var d=parseDate(s); if(!d) return '';
+    var now=todayMid(); var diff=Math.round((d-now)/86400000);
+    var wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    if(diff===0) return 'Today'; if(diff===1) return 'Tomorrow'; if(diff===-1) return 'Yesterday';
+    return wd+', '+mo+' '+d.getDate();
+  }
+  function weekendRange(){
+    var d=todayMid(); var day=d.getDay();
+    if(day===0){ var sun=new Date(d); var sat=new Date(d); sat.setDate(sat.getDate()-1); return [sat,sun]; }
+    var toSat=(6-day+7)%7; var sat=new Date(d); sat.setDate(sat.getDate()+toSat); var sun=new Date(sat); sun.setDate(sun.getDate()+1); return [sat,sun];
+  }
+  function pad2(n){return (n<10?'0':'')+n;}
+  function parseDT(s){ if(!s) return null; var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?/); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0)); }
+  function nowLocalDT(){ var d=new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+  function hasTime(s){ return /[T ]\d{1,2}:\d{2}/.test(String(s||'')); }
+  function fmtTime(d){ var h=d.getHours(), m=d.getMinutes(), ap=h<12?'AM':'PM', hh=h%12; if(hh===0)hh=12; return hh+(m?(':'+pad2(m)):'')+' '+ap; }
+  function dayWord(d){
+    var now=todayMid(); var dm=new Date(d); dm.setHours(0,0,0,0); var diff=Math.round((dm-now)/86400000);
+    var wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    if(diff===0) return 'Today'; if(diff===1) return 'Tomorrow'; if(diff===-1) return 'Yesterday';
+    return wd+', '+mo+' '+d.getDate();
+  }
+  function fmtWhen(s){ var d=parseDT(s); if(!d) return ''; return hasTime(s)?(dayWord(d)+' · '+fmtTime(d)):dayWord(d); }
+  /* completion log helpers (log is the source of truth for "done") */
+  function logFor(id){ return log.filter(function(e){return e.activityId===id;}); }
+  function doneCountFor(id){ return logFor(id).length; }
+  function lastDoneFor(id){ var l=logFor(id); if(!l.length) return null; var best=null; l.forEach(function(e){ var d=parseDT(e.at); if(d&&(!best||d>best)) best=d; }); return best; }
+  function addLogEntry(id,at,fromPlan){ var a=find(id); log.push({id:uid(),activityId:id,name:a?a.name:'',category:a?a.category:'other',at:at||nowLocalDT(),note:'',fromPlan:!!fromPlan}); }
+  function removeLatestLogs(id,n){
+    var idx=[]; log.forEach(function(e,i){ if(e.activityId===id) idx.push(i); });
+    idx.sort(function(a,b){ var da=parseDT(log[a].at)||0, db=parseDT(log[b].at)||0; return db-da; });
+    idx.slice(0,n).sort(function(a,b){return b-a;}).forEach(function(i){ log.splice(i,1); });
+  }
+
+  var actx=null;
+  function audio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; } } return actx; }
+  function blip(freq,dur,type,vol){
+    if(!prefs.sound) return; var c=audio(); if(!c) return;
+    try{ if(c.state==='suspended') c.resume(); }catch(e){}
+    var o=c.createOscillator(),g=c.createGain(); o.type=type||'triangle'; o.frequency.value=freq;
+    var t=c.currentTime; g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.08,t+0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+(dur||0.08));
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+(dur||0.08)+0.02);
+  }
+  function chime(){ if(!prefs.sound) return; [523.25,659.25,783.99,1046.5].forEach(function(fr,i){ setTimeout(function(){ blip(fr,0.26,'sine',0.10); },i*70); }); }
+
+  var saveT=null;
+  function save(){ clearTimeout(saveT); saveT=setTimeout(function(){ Store.set(DATA_KEY,JSON.stringify(activities)); },120); cloudMarkDirty(); }
+  var saveP=null, saveL=null;
+  function savePlans(){ clearTimeout(saveP); saveP=setTimeout(function(){ Store.set(PLANS_KEY,JSON.stringify(plans)); },120); cloudMarkDirty(); }
+  function saveLog(){ clearTimeout(saveL); saveL=setTimeout(function(){ Store.set(LOG_KEY,JSON.stringify(log)); },120); cloudMarkDirty(); }
+  var saveG=null;
+  function saveGame(){ clearTimeout(saveG); saveG=setTimeout(function(){ Store.set(GAME_KEY,JSON.stringify(game)); },120); cloudMarkDirty(); }
+  function savePrefs(){ Store.set(PREF_KEY,JSON.stringify(prefs)); cloudMarkDirty(); }
+
+  function matches(a,f){
+    if(f.cats.length && f.cats.indexOf(a.category)<0) return false;
+    if((a.cost||0) > f.maxCost) return false;
+    if(a.duration && durRank(a.duration) > durRank(f.maxDur)) return false;
+    if(f.maxDist!==Infinity && hasDist(a) && Number(a.dist) > f.maxDist) return false;
+    if(f.loc){ var hay=((a.location||'')+' '+(a.name||'')).toLowerCase(); if(hay.indexOf(f.loc.toLowerCase())<0) return false; }
+    if(f.meal){ if(!(a.meals&&a.meals.indexOf(f.meal)>=0)) return false; }
+    if(f.minRating && (a.rating||0) < f.minRating) return false;
+    var d=parseDate(a.date); var now=todayMid();
+    switch(f.when){
+      case 'anytime': if(d) return false; break;
+      case 'dated': if(!d || d<now) return false; break;
+      case 'today': if(d && d.getTime()!==now.getTime()) return false; break;
+      case 'weekend': if(d){ var wr=weekendRange(); if(d<wr[0]||d>wr[1]) return false; } break;
+      default: break;
+    }
+    return true;
+  }
+  function currentMatches(){ return activities.filter(function(a){return matches(a,filters);}); }
+  function sample(arr,n){ var a=arr.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a.slice(0,n); }
+
+  /* icons */
+  function pinSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';}
+  function calSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>';}
+  function clockSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';}
+  function routeSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/></svg>';}
+  function webSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>';}
+  function igSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>';}
+  function shareSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';}
+  function mapSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';}
+  function forkSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v6a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M7 11v10M16 3c-1.5 0-3 1.8-3 5 0 2.5 1 3.5 3 4v9"/></svg>';}
+  function mealsText(a){ if(!a.meals||!a.meals.length) return ''; var lbl={breakfast:'Breakfast',lunch:'Lunch',dinner:'Dinner'}; return MEALS.filter(function(m){return a.meals.indexOf(m.id)>=0;}).map(function(m){return m.label;}).join(' · '); }
+  function starStr(r){ r=Math.max(0,Math.min(5,r|0)); return '★★★★★'.slice(0,r)+'☆☆☆☆☆'.slice(0,5-r); }
+  function mapUrl(addr){ addr=String(addr==null?'':addr).trim(); return addr?('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr)):''; }
+  function normUrl(u){ u=String(u==null?'':u).trim(); if(!u) return ''; if(!/^https?:\/\//i.test(u)) u='https://'+u; return u; }
+  function igHandle(v){ v=String(v==null?'':v).trim(); if(!v) return ''; var m=v.match(/instagram\.com\/([^\/?#]+)/i); if(m) v=m[1]; return v.replace(/^@/,'').replace(/^\//,'').replace(/[\/?#].*$/,''); }
+  function igUrl(v){ var h=igHandle(v); return h?('https://instagram.com/'+h):''; }
+  function linkEl(html,href){ var x=document.createElement('a'); x.className='card-link'; x.href=href; x.target='_blank'; x.rel='noopener noreferrer'; x.innerHTML=html; x.addEventListener('click',function(e){e.stopPropagation();}); return x; }
+
+  function metaPills(a){
+    var out='';
+    if(a.location) out+='<span class="pill">'+pinSvg()+esc(a.location)+'</span>';
+    if(hasDist(a)) out+='<span class="pill">'+routeSvg()+esc(fmtDist(a.dist))+'</span>';
+    if(a.date) out+='<span class="pill">'+calSvg()+esc(fmtDate(a.date))+'</span>';
+    out+='<span class="pill">'+COSTS[a.cost||0]+'</span>';
+    if(a.duration) out+='<span class="pill">'+clockSvg()+esc(DURMAP[a.duration].label)+'</span>';
+    if(a.meals&&a.meals.length) out+='<span class="pill">'+forkSvg()+esc(mealsText(a))+'</span>';
+    return out;
+  }
+
+  /* ---- result cards (1 or 3) ---- */
+  var cardRefs=[];
+  function makeCard(mini){
+    var el=document.createElement('div');
+    el.className='card placeholder'+(mini?' mini':'');
+    el.innerHTML='<span class="corner"></span>'
+      +'<span class="cat-tag"><span class="swatch"></span><span class="cl">—</span></span>'
+      +'<div class="title"></div><div class="stars"></div><div class="notes"></div><div class="meta"></div><div class="card-foot"></div>';
+    var corner=el.querySelector('.corner'),sw=el.querySelector('.swatch'),cl=el.querySelector('.cl'),
+        title=el.querySelector('.title'),stars=el.querySelector('.stars'),notes=el.querySelector('.notes'),meta=el.querySelector('.meta'),foot=el.querySelector('.card-foot');
+    function setFace(a,landed){
+      el.classList.remove('placeholder','empty-card');
+      var cat=CATMAP[a.category]||CATMAP.other;
+      corner.textContent=landed?'Pick':'…';
+      sw.style.background=cat.color; cl.textContent=cat.label;
+      title.textContent=a.name;
+      stars.textContent=(landed&&a.rating)?starStr(a.rating):'';
+      notes.textContent=(landed&&a.notes)?a.notes:'';
+      meta.innerHTML=landed?metaPills(a):'';
+      foot.innerHTML='';
+      if(landed){
+        var mu=mapUrl(a.address); if(mu){ foot.appendChild(linkEl(mapSvg()+'Map', mu)); }
+        if(a.website){ foot.appendChild(linkEl(webSvg()+'Website', normUrl(a.website))); }
+        var iu=igUrl(a.instagram); if(iu){ foot.appendChild(linkEl(igSvg()+'@'+esc(igHandle(a.instagram)), iu)); }
+        var pb=document.createElement('button'); pb.className='card-link'; pb.type='button'; pb.innerHTML=calSvg()+'Plan it';
+        pb.addEventListener('click',function(ev){ ev.stopPropagation(); openPlan(null,a.id); }); foot.appendChild(pb);
+        var sb=document.createElement('button'); sb.className='card-link'; sb.type='button'; sb.innerHTML=shareSvg()+'Share';
+        sb.addEventListener('click',function(ev){ ev.stopPropagation(); openShare([a]); }); foot.appendChild(sb);
+        var cnt=doneCountFor(a.id);
+        var b=document.createElement('button'); b.className='done-mini'+(cnt>0?' is-done':''); b.type='button';
+        b.textContent=cnt>0?('Done ✓ ('+cnt+')'):'Mark done';
+        b.addEventListener('click',function(ev){ ev.stopPropagation(); markDone(a.id,b); });
+        foot.appendChild(b);
+      }
+    }
+    function placeholder(text,empty){
+      el.classList.add('placeholder'); el.classList.toggle('empty-card',!!empty);
+      corner.textContent='Whimsy'; sw.style.background=''; cl.textContent='—';
+      title.textContent=text; stars.textContent=''; notes.textContent=''; meta.innerHTML=''; foot.innerHTML='';
+    }
+    return {el:el,setFace:setFace,placeholder:placeholder,lit:function(on){el.classList.toggle('lit',on);},
+      pop:function(){el.classList.remove('landed');void el.offsetWidth;el.classList.add('landed');},
+      spin:function(on){el.classList.toggle('spinning',on);}};
+  }
+  function buildCards(count){
+    var res=$('results'); res.innerHTML=''; cardRefs=[];
+    var multi=count>1; res.className='results'+(multi?' multi':'');
+    if(!multi){
+      var deck=document.createElement('div'); deck.className='deck';
+      deck.innerHTML='<div class="shadow-card two"></div><div class="shadow-card"></div>';
+      var c=makeCard(false); deck.appendChild(c.el); res.appendChild(deck); cardRefs.push(c);
+    } else {
+      for(var i=0;i<count;i++){ var m=makeCard(true); res.appendChild(m.el); cardRefs.push(m); }
+    }
+  }
+  function showPlaceholder(text,empty){ buildCards(1); cardRefs[0].placeholder(text,empty); var sb=$('shareBtn'); if(sb) sb.style.display='none'; }
+
+  function markDone(id,btn){
+    var a=find(id); if(!a) return;
+    addLogEntry(id,nowLocalDT()); saveLog(); evaluateProgress(false); renderList(); if(curView==='cal') renderCalendar();
+    var cnt=doneCountFor(id);
+    if(btn){ btn.textContent='Done ✓ ('+cnt+')'; btn.classList.add('is-done'); }
+    toast('Logged — '+a.name);
+  }
+
+  function updateMatchLine(){
+    var n=currentMatches().length, total=activities.length, el=$('matchLine');
+    if(total===0){ el.textContent='No activities yet — add a few first.'; }
+    else if(n===0){ el.textContent='0 match these constraints — loosen them or add more.'; }
+    else {
+      var base=n+' of '+total+(n===1?' activity matches':' activities match');
+      if(pickCount>1) base+=' · drawing '+Math.min(pickCount,n);
+      el.textContent=base;
+    }
+    $('rollBtn').disabled=(n===0||rolling);
+  }
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function roll(){
+    if(rolling) return;
+    var cands=currentMatches();
+    if(!cands.length){ updateMatchLine(); return; }
+    rolling=true; $('rollBtn').disabled=true; lastPicked=null; $('shareBtn').style.display='none';
+    var count=Math.min(pickCount,cands.length);
+    buildCards(count);
+    var finals=sample(cands,count);
+    if(reduceMotion){
+      finals.forEach(function(f,i){ cardRefs[i].setFace(f,false); });
+      setTimeout(function(){ landAll(finals); },160); return;
+    }
+    cardRefs.forEach(function(c){ c.spin(true); });
+    var frames=18+Math.floor(Math.random()*7), i=0;
+    function step(){
+      for(var k=0;k<cardRefs.length;k++){
+        var pick=(i>=frames-1)?finals[k]:cands[Math.floor(Math.random()*cands.length)];
+        cardRefs[k].setFace(pick,false);
+      }
+      blip(360+i*14,0.05,'square',0.05);
+      i++;
+      if(i<frames){ var p=i/frames; setTimeout(step,42+p*p*300); }
+      else setTimeout(function(){ landAll(finals); },240);
+    }
+    step();
+  }
+  function landAll(finals){
+    rolling=false; lastPicked=finals;
+    finals.forEach(function(f,i){
+      var c=cardRefs[i]; c.spin(false); c.setFace(f,true); c.pop(); c.lit(true);
+      setTimeout(function(){ c.lit(false); },1300);
+    });
+    chime(); $('rollBtn').disabled=false; $('shareBtn').style.display='inline-flex'; updateMatchLine();
+  }
+
+  /* ---- list ---- */
+  function renderList(){
+    var wrap=$('alist'); var q=($('searchInput').value||'').trim().toLowerCase(); var sort=$('sortSel').value;
+    var items=activities.filter(function(a){ if(!q) return true; return ((a.name||'')+' '+(a.location||'')+' '+(a.notes||'')).toLowerCase().indexOf(q)>=0; });
+    items.sort(function(x,y){
+      if(sort==='name') return (x.name||'').localeCompare(y.name||'');
+      if(sort==='cat') return (CATMAP[x.category]||CATMAP.other).label.localeCompare((CATMAP[y.category]||CATMAP.other).label) || (x.name||'').localeCompare(y.name||'');
+      if(sort==='date'){ var dx=parseDate(x.date),dy=parseDate(y.date); if(dx&&dy) return dx-dy; if(dx) return -1; if(dy) return 1; return (x.createdAt||0)-(y.createdAt||0); }
+      if(sort==='dist'){ var hx=hasDist(x),hy=hasDist(y); if(hx&&hy) return Number(x.dist)-Number(y.dist); if(hx) return -1; if(hy) return 1; return (x.createdAt||0)-(y.createdAt||0); }
+      if(sort==='rating'){ var rx=x.rating||0, ry=y.rating||0; if(rx!==ry) return ry-rx; return (x.name||'').localeCompare(y.name||''); }
+      return (y.createdAt||0)-(x.createdAt||0);
+    });
+    if(activities.length===0){ wrap.innerHTML=''; $('countHead').textContent=''; wrap.appendChild(emptyEl()); return; }
+    $('countHead').textContent=items.length+(items.length===1?' activity':' activities');
+    if(items.length===0){ wrap.innerHTML='<div class="empty"><div class="em-ico">🔍</div><h3>Nothing matches</h3><p>No saved activity matches “'+esc(q)+'”.</p></div>'; return; }
+    var html='';
+    items.forEach(function(a){
+      var cat=CATMAP[a.category]||CATMAP.other;
+      var d=parseDate(a.date); var dateCls=''; if(d){ dateCls=d<todayMid()?'dateflag past':'dateflag'; }
+      var sub='';
+      if(a.location) sub+='<span>'+pinSvg()+esc(a.location)+'</span>';
+      if(hasDist(a)) sub+='<span>'+routeSvg()+esc(fmtDist(a.dist))+'</span>';
+      if(a.date) sub+='<span class="'+dateCls+'">'+calSvg()+esc(fmtDate(a.date))+'</span>';
+      sub+='<span>'+(a.cost?COSTS[a.cost]:'Free')+'</span>';
+      if(a.duration) sub+='<span>'+clockSvg()+esc(DURMAP[a.duration].label)+'</span>';
+      var mu=mapUrl(a.address); if(mu) sub+='<a class="sublink" href="'+esc(mu)+'" target="_blank" rel="noopener noreferrer">'+mapSvg()+'Map</a>';
+      if(a.meals&&a.meals.length) sub+='<span>'+forkSvg()+esc(mealsText(a))+'</span>';
+      if(a.rating) sub+='<span class="rt">'+starStr(a.rating)+'</span>';
+      if(a.website) sub+='<a class="sublink" href="'+esc(normUrl(a.website))+'" target="_blank" rel="noopener noreferrer">'+webSvg()+'Site</a>';
+      var iurl=igUrl(a.instagram); if(iurl) sub+='<a class="sublink" href="'+esc(iurl)+'" target="_blank" rel="noopener noreferrer">'+igSvg()+'@'+esc(igHandle(a.instagram))+'</a>';
+      var dc=doneCountFor(a.id); var done=(dc>0)?'<span class="done-badge">✓ '+dc+'</span>':'';
+      html+='<div class="arow" data-id="'+a.id+'"><span class="bar" style="background:'+cat.color+'"></span>'
+        +'<div class="body"><div class="name">'+esc(a.name)+'</div><div class="sub">'+sub+'</div></div>'+done+'</div>';
+    });
+    wrap.innerHTML=html;
+    [].forEach.call(wrap.querySelectorAll('.arow'),function(row){ row.addEventListener('click',function(){ openEdit(row.getAttribute('data-id')); }); });
+    [].forEach.call(wrap.querySelectorAll('.sublink'),function(a){ a.addEventListener('click',function(e){ e.stopPropagation(); }); });
+  }
+  function emptyEl(){
+    var d=document.createElement('div'); d.className='empty';
+    d.innerHTML='<div class="em-ico">🗺️</div><h3>Your list is empty</h3><p>Add the things you keep meaning to do — outings, meals, projects — then let Whimsy pick.</p><button class="btn btn-primary" id="emptyAdd">Add one</button><button class="btn btn-ghost" id="emptySamples">Add examples</button>';
+    setTimeout(function(){ var ea=$('emptyAdd'),es=$('emptySamples'); if(ea)ea.addEventListener('click',function(){openEdit(null);}); if(es)es.addEventListener('click',loadSamples); },0);
+    return d;
+  }
+
+  /* ---- pickers in edit sheet ---- */
+  function buildPickers(){
+    var cp=$('fCatPick'); cp.innerHTML='';
+    CATS.forEach(function(c){
+      var b=document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('data-cat',c.id);
+      b.innerHTML='<span class="swatch" style="background:'+c.color+'"></span>'+esc(c.label);
+      b.addEventListener('click',function(){ draft.cat=c.id; syncPickers(); }); cp.appendChild(b);
+    });
+    var costp=$('fCostPick'); costp.innerHTML='';
+    COSTS.forEach(function(lbl,i){
+      var b=document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('data-cost',i); b.textContent=lbl;
+      b.addEventListener('click',function(){ draft.cost=i; syncPickers(); }); costp.appendChild(b);
+    });
+    var dp=$('fDurPick'); dp.innerHTML='';
+    [{id:'',label:'Any'}].concat(DURS).forEach(function(d){
+      var b=document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('data-dur',d.id); b.textContent=d.label;
+      b.addEventListener('click',function(){ draft.dur=d.id; syncPickers(); }); dp.appendChild(b);
+    });
+    var mp=$('fMealsPick'); mp.innerHTML='';
+    MEALS.forEach(function(m){
+      var b=document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('data-meal',m.id); b.textContent=m.label;
+      b.addEventListener('click',function(){ var i=draft.meals.indexOf(m.id); if(i<0) draft.meals.push(m.id); else draft.meals.splice(i,1); syncPickers(); });
+      mp.appendChild(b);
+    });
+    var rp=$('fRatingPick'); rp.innerHTML='';
+    for(var sN=1;sN<=5;sN++){ (function(v){ var b=document.createElement('button'); b.type='button'; b.setAttribute('data-star',v); b.textContent='★'; b.addEventListener('click',function(){ draft.rating=(draft.rating===v?0:v); syncPickers(); }); rp.appendChild(b); })(sN); }
+  }
+  function syncPickers(){
+    [].forEach.call($('fCatPick').children,function(b){ var on=b.getAttribute('data-cat')===draft.cat; b.classList.toggle('on',on); b.classList.toggle('amber',on); });
+    [].forEach.call($('fCostPick').children,function(b){ var on=+b.getAttribute('data-cost')===draft.cost; b.classList.toggle('on',on); b.classList.toggle('amber',on); });
+    [].forEach.call($('fDurPick').children,function(b){ var on=b.getAttribute('data-dur')===draft.dur; b.classList.toggle('on',on); b.classList.toggle('amber',on); });
+    var showMeals=(draft.cat==='food'||draft.cat==='drinks');
+    $('mealsField').style.display=showMeals?'block':'none';
+    [].forEach.call($('fMealsPick').children,function(b){ var on=draft.meals.indexOf(b.getAttribute('data-meal'))>=0; b.classList.toggle('on',on); b.classList.toggle('amber',on); });
+    [].forEach.call($('fRatingPick').children,function(b){ b.classList.toggle('on', +b.getAttribute('data-star')<=draft.rating); });
+  }
+  function renderDone(){ $('doneVal').textContent=draft.done; $('doneMinus').disabled=(draft.done<=0); }
+  function openEdit(id){
+    editingId=id; var a=id?find(id):null;
+    $('editTitle').textContent=id?'Edit activity':'Add activity';
+    $('fName').value=a?a.name:''; $('fPlace').value=a?(a.location||''):''; $('fAddr').value=a?(a.address||''):'';
+    $('fDist').value=(a&&hasDist(a))?a.dist:''; $('fDate').value=a?(a.date||''):''; $('fNotes').value=a?(a.notes||''):'';
+    $('fWeb').value=a?(a.website||''):''; $('fIg').value=a?(a.instagram||''):'';
+    draft.cat=a?(CATMAP[a.category]?a.category:'other'):'other'; draft.cost=a?(a.cost||0):0; draft.dur=a?(a.duration||''):''; draft.done=a?doneCountFor(a.id):0; draft.meals=(a&&Array.isArray(a.meals))?a.meals.slice():[]; draft.rating=a?(a.rating||0):0;
+    syncPickers(); renderDone(); $('nameErr').classList.remove('show'); $('deleteAct').style.display=id?'inline-block':'none';
+    openScrim('editScrim'); setTimeout(function(){ $('fName').focus(); },80);
+  }
+  function saveEdit(){
+    var name=$('fName').value.trim();
+    if(!name){ $('nameErr').classList.add('show'); $('fName').focus(); return; }
+    var dv=$('fDist').value.trim(); var dist=''; if(dv!==''){ var dn=Number(dv); if(isFinite(dn)&&dn>=0) dist=dn; }
+    var rec={name:name,location:$('fPlace').value.trim(),address:$('fAddr').value.trim(),dist:dist,date:$('fDate').value||'',category:draft.cat,cost:draft.cost,duration:draft.dur,notes:$('fNotes').value.trim(),website:$('fWeb').value.trim(),instagram:$('fIg').value.trim(),meals:(draft.cat==='food'||draft.cat==='drinks')?draft.meals.slice():[],rating:draft.rating||0};
+    var aid;
+    if(editingId){ var a=find(editingId); if(a){ for(var k in rec) a[k]=rec[k]; } aid=editingId; toast('Saved'); }
+    else { rec.id=uid(); rec.createdAt=Date.now(); activities.push(rec); aid=rec.id; toast('Added'); }
+    var cur=doneCountFor(aid);
+    if(draft.done>cur){ for(var i=0;i<draft.done-cur;i++) addLogEntry(aid,nowLocalDT()); saveLog(); evaluateProgress(false); }
+    else if(draft.done<cur){ removeLatestLogs(aid,cur-draft.done); saveLog(); }
+    save(); closeScrim('editScrim'); renderList(); updateMatchLine(); if(curView==='log') renderLog(); if(curView==='cal') renderCalendar(); if(curView==='quest') renderQuest();
+  }
+  function deleteAct(){
+    if(!editingId) return;
+    activities=activities.filter(function(x){return x.id!==editingId;});
+    plans=plans.filter(function(p){return p.activityId!==editingId;});
+    lastPicked=null; if(!rolling) showPlaceholder('Tap Roll to draw something to do');
+    save(); savePlans(); closeScrim('editScrim'); renderList(); updateMatchLine();
+    if(curView==='plan') renderPlans(); if(curView==='log') renderLog(); if(curView==='cal') renderCalendar(); toast('Deleted');
+  }
+
+  /* ---- constraint filters ---- */
+  function buildFilters(){
+    var fc=$('fCats'); fc.innerHTML='';
+    CATS.forEach(function(c){
+      var b=document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('data-cat',c.id);
+      b.innerHTML='<span class="swatch" style="background:'+c.color+'"></span>'+esc(c.label);
+      b.addEventListener('click',function(){ var i=filters.cats.indexOf(c.id); if(i<0) filters.cats.push(c.id); else filters.cats.splice(i,1); b.classList.toggle('on'); b.classList.toggle('amber'); updateMatchLine(); });
+      fc.appendChild(b);
+    });
+    var fw=$('fWhen'); fw.innerHTML='';
+    WHEN.forEach(function(w){
+      var b=document.createElement('button'); b.className='chip'+(w.id==='any'?' on amber':''); b.type='button'; b.textContent=w.label;
+      b.addEventListener('click',function(){ filters.when=w.id; [].forEach.call(fw.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fw.appendChild(b);
+    });
+    var fm=$('fMeal'); fm.innerHTML='';
+    [{id:'',label:'Any'}].concat(MEALS).forEach(function(m){
+      var b=document.createElement('button'); b.className='chip'+(m.id===''?' on amber':''); b.type='button'; b.textContent=m.label;
+      b.addEventListener('click',function(){ filters.meal=m.id; [].forEach.call(fm.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fm.appendChild(b);
+    });
+    var fco=$('fCost'); fco.innerHTML='';
+    COSTS.forEach(function(lbl,i){
+      var b=document.createElement('button'); b.className='chip'+(i===3?' on amber':''); b.type='button'; b.textContent=i===3?'Any':('≤ '+lbl);
+      b.addEventListener('click',function(){ filters.maxCost=i; [].forEach.call(fco.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fco.appendChild(b);
+    });
+    var fd=$('fDur'); fd.innerHTML='';
+    DURS.forEach(function(d,idx){
+      var last=idx===DURS.length-1;
+      var b=document.createElement('button'); b.className='chip'+(last?' on amber':''); b.type='button'; b.textContent=last?'Any':('≤ '+d.label);
+      b.addEventListener('click',function(){ filters.maxDur=d.id; [].forEach.call(fd.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fd.appendChild(b);
+    });
+    var fdi=$('fDistChips'); fdi.innerHTML='';
+    DISTS.forEach(function(o){
+      var any=o.v===Infinity;
+      var b=document.createElement('button'); b.className='chip'+(any?' on amber':''); b.type='button'; b.textContent=o.label;
+      b.addEventListener('click',function(){ filters.maxDist=o.v; [].forEach.call(fdi.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fdi.appendChild(b);
+    });
+    var fr=$('fRating'); fr.innerHTML='';
+    [{v:0,label:'Any'},{v:3,label:'★ 3+'},{v:4,label:'★ 4+'},{v:5,label:'★ 5'}].forEach(function(o){
+      var b=document.createElement('button'); b.className='chip'+(o.v===0?' on amber':''); b.type='button'; b.textContent=o.label;
+      b.addEventListener('click',function(){ filters.minRating=o.v; [].forEach.call(fr.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      fr.appendChild(b);
+    });
+  }
+
+  function buildPickCtrl(){
+    var pp=$('pickPick'); pp.innerHTML='';
+    [{n:1,label:'One'},{n:3,label:'Three'}].forEach(function(o){
+      var b=document.createElement('button'); b.className='chip'+(o.n===pickCount?' on amber':''); b.type='button'; b.textContent=o.label;
+      b.addEventListener('click',function(){ pickCount=o.n; [].forEach.call(pp.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); updateMatchLine(); });
+      pp.appendChild(b);
+    });
+  }
+
+  function loadSamples(){
+    var s=[
+      {name:'Sunrise hike at Great Falls',location:'Great Falls Park, VA',dist:14,category:'outdoors',cost:1,duration:'half',notes:'Billy Goat Trail if feeling bold.'},
+      {name:'Board game night',location:'Labyrinth Games, DC',dist:12,category:'games',cost:1,duration:'short',notes:''},
+      {name:'Try a new ramen spot',location:'Rockville',dist:6,category:'food',cost:2,duration:'short',notes:''},
+      {name:'Orangetheory class',location:'Bethesda',dist:4,category:'fitness',cost:2,duration:'quick',notes:''},
+      {name:'Smithsonian afternoon',location:'National Mall, DC',dist:11,category:'culture',cost:0,duration:'half',notes:'Free entry.'},
+      {name:'Movie night',location:'Home',dist:0,category:'entertainment',cost:0,duration:'short',notes:''},
+      {name:'Prototype a new game build',location:'Home',dist:0,category:'other',cost:0,duration:'full',notes:'Single-file HTML, of course.'},
+      {name:'Picnic + yoga in the park',location:'Rock Creek Park',dist:8,category:'fitness',cost:0,duration:'short',notes:''}
+    ];
+    s.forEach(function(r){ r.id=uid(); r.createdAt=Date.now()+Math.random(); r.date=''; r.doneCount=0; r.lastDone=null; activities.push(r); });
+    save(); renderList(); updateMatchLine(); toast('Added 8 examples');
+  }
+
+  function openScrim(id){ $(id).classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeScrim(id){ $(id).classList.remove('open'); document.body.style.overflow=''; }
+  var toastT=null;
+  function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('show'); },1700); }
+
+  function setView(v){
+    curView=v;
+    [].forEach.call(document.querySelectorAll('.nav button'),function(b){ b.classList.toggle('active',b.getAttribute('data-view')===v); });
+    ['roll','plan','cal','list','log','quest'].forEach(function(name){ $('view-'+name).classList.toggle('active',name===v); });
+    var fab=$('fab');
+    if(v==='list'){ fab.style.display='flex'; fab.lastChild.textContent=' Add activity'; }
+    else if(v==='plan'){ fab.style.display='flex'; fab.lastChild.textContent=' Add plan'; }
+    else fab.style.display='none';
+    if(v==='plan') renderPlans();
+    if(v==='cal') renderCalendar();
+    if(v==='log') renderLog();
+    if(v==='quest') renderQuest();
+  }
+
+  /* ---------- PLAN ---------- */
+  function planById(id){ for(var i=0;i<plans.length;i++) if(plans[i].id===id) return plans[i]; return null; }
+  function planName(p){ var a=find(p.activityId); return a?a.name:(p.name||'Activity'); }
+  function planCat(p){ var a=find(p.activityId); return CATMAP[a?a.category:(p.category||'other')]||CATMAP.other; }
+  function defaultPlanAt(){ var d=new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours()+1); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+  function openPlan(planId,activityId){
+    editingPlanId=planId||null;
+    var sel=$('planAct'); sel.innerHTML='';
+    activities.slice().sort(function(a,b){return (a.name||'').localeCompare(b.name||'');}).forEach(function(a){
+      var o=document.createElement('option'); o.value=a.id; o.textContent=a.name; sel.appendChild(o);
+    });
+    var p=planId?planById(planId):null;
+    var preAct=p?p.activityId:(activityId||(activities[0]&&activities[0].id));
+    if(preAct) sel.value=preAct;
+    $('planTitle').textContent=planId?'Edit plan':'Plan an activity';
+    $('planAt').value=p?p.at:defaultPlanAt();
+    $('planNote').value=p?(p.note||''):'';
+    var none=(activities.length===0);
+    $('planErr').classList.toggle('show',none); $('planAct').disabled=none; $('savePlan').disabled=none;
+    $('deletePlan').style.display=planId?'inline-block':'none';
+    openScrim('planScrim');
+  }
+  function savePlan(){
+    if(!activities.length) return;
+    var aid=$('planAct').value, at=$('planAt').value; if(!aid||!at) return;
+    var note=$('planNote').value.trim();
+    if(editingPlanId){ var p=planById(editingPlanId); if(p){ p.activityId=aid; p.at=at; p.note=note; } toast('Plan updated'); }
+    else { plans.push({id:uid(),activityId:aid,at:at,note:note,createdAt:Date.now(),done:false}); toast('Planned'); }
+    savePlans(); closeScrim('planScrim'); renderPlans();
+  }
+  function deletePlan(){ if(!editingPlanId) return; plans=plans.filter(function(p){return p.id!==editingPlanId;}); savePlans(); closeScrim('planScrim'); renderPlans(); toast('Plan removed'); }
+  function completePlan(id){
+    var p=planById(id); if(!p) return;
+    var pd=parseDT(p.at); var at=(pd&&pd<=new Date())?p.at:nowLocalDT();
+    addLogEntry(p.activityId,at,true); saveLog();
+    plans=plans.filter(function(x){return x.id!==id;}); savePlans(); evaluateProgress(false);
+    renderPlans(); renderList(); if(curView==='cal') renderCalendar(); toast('Logged — '+planName(p));
+  }
+  function renderPlans(){
+    var wrap=$('planList'); var up=plans.filter(function(p){return !p.done;});
+    up.sort(function(a,b){ return (parseDT(a.at)||0)-(parseDT(b.at)||0); });
+    $('planCount').textContent=up.length?(up.length+(up.length===1?' plan':' plans')):'';
+    if(!up.length){ wrap.innerHTML='<div class="empty"><div class="em-ico">📅</div><h3>Nothing planned</h3><p>Schedule an activity to see it here. Roll something and tap “Plan it”, or use the + button.</p></div>'; return; }
+    var now=new Date(), t0=todayMid();
+    var buckets={over:[],today:[],tom:[],week:[],later:[]};
+    up.forEach(function(p){ var d=parseDT(p.at); if(!d){ buckets.later.push(p); return; }
+      var dm=new Date(d); dm.setHours(0,0,0,0); var diff=Math.round((dm-t0)/86400000);
+      if(d<now) buckets.over.push(p); else if(diff===0) buckets.today.push(p); else if(diff===1) buckets.tom.push(p); else if(diff<=7) buckets.week.push(p); else buckets.later.push(p);
+    });
+    var order=[['over','Overdue'],['today','Today'],['tom','Tomorrow'],['week','This week'],['later','Later']];
+    var html='', first=true;
+    order.forEach(function(g){ var arr=buckets[g[0]]; if(!arr.length) return;
+      html+='<div class="group-head'+(first?' first':'')+(g[0]==='over'?' overdue':'')+'">'+g[1]+'</div>'; first=false;
+      arr.forEach(function(p){ var c=planCat(p); var over=parseDT(p.at)&&parseDT(p.at)<now;
+        html+='<div class="pcard"><span class="bar" style="background:'+c.color+'"></span>'
+          +'<div class="pbody"><div class="pname">'+esc(planName(p))+'</div>'
+          +'<div class="pwhen'+(over?' over':'')+'">'+calSvg()+esc(fmtWhen(p.at))+'</div>'
+          +(p.note?'<div class="pnote">'+esc(p.note)+'</div>':'')+'</div>'
+          +'<div class="pacts"><button class="pmini go" data-done="'+p.id+'">Did it</button>'
+          +'<button class="pmini" data-edit="'+p.id+'">Edit</button></div></div>';
+      });
+    });
+    wrap.innerHTML=html;
+    [].forEach.call(wrap.querySelectorAll('[data-done]'),function(b){ b.addEventListener('click',function(){ completePlan(b.getAttribute('data-done')); }); });
+    [].forEach.call(wrap.querySelectorAll('[data-edit]'),function(b){ b.addEventListener('click',function(){ openPlan(b.getAttribute('data-edit'),null); }); });
+  }
+
+  /* ---------- LOG ---------- */
+  function logEntryName(e){ if(e.name) return e.name; var a=find(e.activityId); return a?a.name:'(removed)'; }
+  function logEntryCat(e){ var a=find(e.activityId); var id=(a?a.category:e.category)||'other'; return CATMAP[id]||CATMAP.other; }
+  function deleteLogEntry(id){ log=log.filter(function(e){return e.id!==id;}); saveLog(); renderList(); if(curView==='log') renderLog(); if(curView==='cal') renderCalendar(); }
+  function renderLog(){
+    var wrap=$('logList');
+    if(!log.length){ $('logCount').textContent=''; wrap.innerHTML='<div class="empty"><div class="em-ico">🕮</div><h3>No history yet</h3><p>When you mark something done — from a roll, a plan, or the list — it shows up here with a timestamp.</p></div>'; return; }
+    $('logCount').textContent=log.length+(log.length===1?' entry':' entries');
+    var html='';
+    if(logGroup==='time'){
+      var entries=log.slice().sort(function(a,b){ return (parseDT(b.at)||0)-(parseDT(a.at)||0); });
+      var lastKey=null, first=true;
+      entries.forEach(function(e){ var d=parseDT(e.at); var key=d?dayWord(d):'Unknown';
+        if(key!==lastKey){ html+='<div class="group-head'+(first?' first':'')+'">'+esc(key)+'</div>'; lastKey=key; first=false; }
+        var c=logEntryCat(e);
+        html+='<div class="lrow tappable" data-le="'+e.id+'"><span class="ldot" style="background:'+c.color+'"></span>'
+          +'<div class="lbody"><div class="lname">'+esc(logEntryName(e))+'</div>'
+          +'<div class="ltime">'+(d?esc(fmtTime(d)):'')+' · '+esc(c.label)+'</div></div>'
+          +'<button class="lx" data-del="'+e.id+'" aria-label="Remove entry">×</button></div>';
+      });
+    } else {
+      var byId={}, orderIds=[];
+      log.forEach(function(e){ var k=e.activityId||('snap:'+logEntryName(e)); if(!byId[k]){ byId[k]=[]; orderIds.push(k); } byId[k].push(e); });
+      orderIds.sort(function(a,b){ return byId[b].length-byId[a].length; });
+      orderIds.forEach(function(k){
+        var arr=byId[k].slice().sort(function(a,b){ return (parseDT(b.at)||0)-(parseDT(a.at)||0); });
+        var c=logEntryCat(arr[0]);
+        var times=arr.slice(0,6).map(function(e){ var d=parseDT(e.at); return d?(dayWord(d)+' '+fmtTime(d)):''; }).filter(Boolean).join('  ·  ');
+        if(arr.length>6) times+='  · +'+(arr.length-6)+' more';
+        html+='<div class="lrow"><span class="ldot" style="background:'+c.color+'"></span>'
+          +'<div class="lbody"><div class="lname">'+esc(logEntryName(arr[0]))+' <span class="lcount">×'+arr.length+'</span></div>'
+          +'<div class="ltimes">'+esc(times)+'</div></div></div>';
+      });
+    }
+    wrap.innerHTML=html;
+    [].forEach.call(wrap.querySelectorAll('[data-del]'),function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); deleteLogEntry(b.getAttribute('data-del')); }); });
+    [].forEach.call(wrap.querySelectorAll('[data-le]'),function(r){ r.addEventListener('click',function(){ openLog(r.getAttribute('data-le'),null,null); }); });
+  }
+  function buildLogGroupCtrl(){
+    var pp=$('logGroupPick'); pp.innerHTML='';
+    [{v:'time',label:'Time'},{v:'activity',label:'Activity'}].forEach(function(o){
+      var b=document.createElement('button'); b.className='chip'+(o.v===logGroup?' on amber':''); b.type='button'; b.textContent=o.label;
+      b.addEventListener('click',function(){ logGroup=o.v; [].forEach.call(pp.children,function(x){x.classList.remove('on','amber');}); b.classList.add('on','amber'); renderLog(); });
+      pp.appendChild(b);
+    });
+  }
+
+  /* ---------- CALENDAR ---------- */
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DOWFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function isoOf(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function nowHHmm(){ var d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+  function calInit(){ var n=new Date(); calY=n.getFullYear(); calM=n.getMonth(); if(!calSel) calSel=isoOf(n); }
+  function renderCalendar(){
+    if(calY==null) calInit();
+    var doneByDay={}, planByDay={};
+    log.forEach(function(e){ var k=(e.at||'').slice(0,10); if(k){ (doneByDay[k]=doneByDay[k]||[]).push(e); } });
+    plans.forEach(function(p){ if(p.done) return; var k=(p.at||'').slice(0,10); if(k){ (planByDay[k]=planByDay[k]||[]).push(p); } });
+    $('calMonth').textContent=MONTHS[calM]+' '+calY;
+    var first=new Date(calY,calM,1); var gridStart=new Date(calY,calM,1-first.getDay());
+    var todayIso=isoOf(new Date());
+    var html='<div class="cal-wd"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="cal-cells">';
+    for(var i=0;i<42;i++){
+      var d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
+      var key=isoOf(d), inM=d.getMonth()===calM, dones=doneByDay[key]||[], plns=planByDay[key]||[];
+      var cls='cal-cell'+(inM?'':' out')+(key===todayIso?' today':'')+(key===calSel?' sel':'')+(plns.length?' has-plan':'');
+      var dots=''; dones.slice(0,4).forEach(function(e){ dots+='<span class="cd" style="background:'+logEntryCat(e).color+'"></span>'; });
+      if(dones.length>4) dots+='<span class="cmore">+'+(dones.length-4)+'</span>';
+      html+='<button class="'+cls+'" data-day="'+key+'"><span class="cnum">'+d.getDate()+'</span><span class="cdots">'+dots+'</span></button>';
+    }
+    html+='</div>';
+    $('calGrid').innerHTML=html;
+    [].forEach.call($('calGrid').querySelectorAll('[data-day]'),function(b){ b.addEventListener('click',function(){ calSel=b.getAttribute('data-day'); renderCalendar(); }); });
+    renderCalDay();
+  }
+  function renderCalDay(){
+    var wrap=$('calDay'); if(!calSel){ wrap.innerHTML=''; return; }
+    var d=parseDT(calSel);
+    var full=d?(DOWFULL[d.getDay()]+', '+MONTHS[d.getMonth()]+' '+d.getDate()):calSel;
+    var dones=log.filter(function(e){ return (e.at||'').slice(0,10)===calSel; }).sort(function(a,b){ return (parseDT(a.at)||0)-(parseDT(b.at)||0); });
+    var plns=plans.filter(function(p){ return !p.done && (p.at||'').slice(0,10)===calSel; }).sort(function(a,b){ return (parseDT(a.at)||0)-(parseDT(b.at)||0); });
+    var html='<div class="cal-day-title"><span>'+esc(full)+'</span><span class="add-log" id="addLogDay">+ Log done</span></div>';
+    if(!dones.length && !plns.length){ html+='<div class="empty" style="padding:24px 16px"><p style="margin:0">Nothing recorded or planned. Tap “+ Log done” to add what you did.</p></div>'; }
+    if(plns.length){
+      html+='<div class="group-head first">Planned</div>';
+      plns.forEach(function(p){ var c=planCat(p); var t=parseDT(p.at);
+        html+='<div class="pcard"><span class="bar" style="background:'+c.color+'"></span><div class="pbody"><div class="pname">'+esc(planName(p))+'</div><div class="pwhen">'+calSvg()+((t&&hasTime(p.at))?esc(fmtTime(t)):'All day')+(p.note?(' · '+esc(p.note)):'')+'</div></div><div class="pacts"><button class="pmini go" data-cdone="'+p.id+'">Did it</button><button class="pmini" data-cedit="'+p.id+'">Edit</button></div></div>';
+      });
+    }
+    if(dones.length){
+      html+='<div class="group-head'+(plns.length?'':' first')+'">Done</div>';
+      dones.forEach(function(e){ var c=logEntryCat(e); var t=parseDT(e.at);
+        html+='<div class="lrow tappable" data-ledit="'+e.id+'"><span class="ldot" style="background:'+c.color+'"></span><div class="lbody"><div class="lname">'+esc(logEntryName(e))+'</div><div class="ltime">'+((t&&hasTime(e.at))?esc(fmtTime(t)):'time not set')+' · '+esc(c.label)+'</div></div><button class="lx" data-ldel="'+e.id+'" aria-label="Delete">×</button></div>';
+      });
+    }
+    wrap.innerHTML=html;
+    var al=$('addLogDay'); if(al) al.addEventListener('click',function(){ openLog(null,null,calSel); });
+    [].forEach.call(wrap.querySelectorAll('[data-cdone]'),function(b){ b.addEventListener('click',function(){ completePlan(b.getAttribute('data-cdone')); }); });
+    [].forEach.call(wrap.querySelectorAll('[data-cedit]'),function(b){ b.addEventListener('click',function(){ openPlan(b.getAttribute('data-cedit'),null); }); });
+    [].forEach.call(wrap.querySelectorAll('[data-ledit]'),function(r){ r.addEventListener('click',function(){ openLog(r.getAttribute('data-ledit'),null,null); }); });
+    [].forEach.call(wrap.querySelectorAll('[data-ldel]'),function(b){ b.addEventListener('click',function(ev){ ev.stopPropagation(); deleteLogEntry(b.getAttribute('data-ldel')); }); });
+  }
+
+  /* ---------- completion-log editor ---------- */
+  function logById(id){ for(var i=0;i<log.length;i++) if(log[i].id===id) return log[i]; return null; }
+  function openLog(logId,activityId,presetDay){
+    editingLogId=logId||null;
+    var sel=$('logAct'); sel.innerHTML='';
+    activities.slice().sort(function(a,b){return (a.name||'').localeCompare(b.name||'');}).forEach(function(a){ var o=document.createElement('option'); o.value=a.id; o.textContent=a.name; sel.appendChild(o); });
+    var e=logId?logById(logId):null;
+    var preAct=e?e.activityId:(activityId||(activities[0]&&activities[0].id));
+    if(preAct) sel.value=preAct;
+    $('logTitle').textContent=logId?'Edit completion':'Log a completion';
+    var atVal;
+    if(e) atVal=(e.at&&hasTime(e.at))?e.at:(((e.at||'').slice(0,10)||isoOf(new Date()))+'T'+nowHHmm());
+    else if(presetDay) atVal=presetDay+'T'+nowHHmm();
+    else atVal=nowLocalDT();
+    $('logAt').value=atVal;
+    var none=(activities.length===0);
+    $('logErr').classList.toggle('show',none); $('logAct').disabled=none; $('saveLogBtn').disabled=none;
+    $('deleteLogBtn').style.display=logId?'inline-block':'none';
+    openScrim('logScrim');
+  }
+  function saveLogEntry(){
+    if(!activities.length) return;
+    var aid=$('logAct').value, at=$('logAt').value; if(!aid||!at) return;
+    var a=find(aid);
+    if(editingLogId){ var e=logById(editingLogId); if(e){ e.activityId=aid; e.at=at; e.name=a?a.name:e.name; e.category=a?a.category:e.category; } toast('Updated'); }
+    else { log.push({id:uid(),activityId:aid,name:a?a.name:'',category:a?a.category:'other',at:at,note:''}); toast('Logged'); }
+    saveLog(); evaluateProgress(false); closeScrim('logScrim'); renderList();
+    if(curView==='cal') renderCalendar(); if(curView==='log') renderLog();
+  }
+  function deleteLogSheet(){ if(!editingLogId) return; log=log.filter(function(e){return e.id!==editingLogId;}); saveLog(); closeScrim('logScrim'); renderList(); if(curView==='cal') renderCalendar(); if(curView==='log') renderLog(); toast('Deleted'); }
+
+  /* ---------- QUESTS · ACHIEVEMENTS · SEASON ---------- */
+  var XP_DONE=12;
+  var RANKS=[{xp:0,name:'Wanderer'},{xp:150,name:'Pathfinder'},{xp:350,name:'Trailblazer'},{xp:650,name:'Voyager'},{xp:1050,name:'Pioneer'},{xp:1600,name:'Luminary'},{xp:2300,name:'Legend'}];
+  function rankFor(xp){ var idx=0; for(var i=0;i<RANKS.length;i++){ if(xp>=RANKS[i].xp) idx=i; } return {rank:RANKS[idx],idx:idx,next:RANKS[idx+1]||null}; }
+  function seededRand(seed){ var h=2166136261; for(var i=0;i<seed.length;i++){ h^=seed.charCodeAt(i); h=Math.imul(h,16777619); } return function(){ h+=0x6D2B79F5; var t=Math.imul(h^(h>>>15),1|h); t^=t+Math.imul(t^(t>>>7),61|t); return ((t^(t>>>14))>>>0)/4294967296; }; }
+  function seasonOf(d){
+    var y=d.getFullYear(), m=d.getMonth(), name,start,end;
+    if(m>=2&&m<=4){ name='Spring'; start=new Date(y,2,1); end=new Date(y,5,1); }
+    else if(m>=5&&m<=7){ name='Summer'; start=new Date(y,5,1); end=new Date(y,8,1); }
+    else if(m>=8&&m<=10){ name='Autumn'; start=new Date(y,8,1); end=new Date(y,11,1); }
+    else { name='Winter'; if(m===11){ start=new Date(y,11,1); end=new Date(y+1,2,1); } else { start=new Date(y-1,11,1); end=new Date(y,2,1); } }
+    return {name:name,label:name+' '+start.getFullYear(),start:start,end:end};
+  }
+  function weekStartOf(d){ var x=new Date(d); x.setHours(0,0,0,0); var wd=x.getDay(); x.setDate(x.getDate()+(wd===0?-6:1-wd)); return x; }
+  function inRange(at,start,end){ var d=parseDT(at); return d&&d>=start&&d<end; }
+
+  var QUEST_POOL=[
+    {id:'three',title:'Complete 3 activities',goal:3,xp:60,count:function(c){return c.week.length;}},
+    {id:'five',title:'Complete 5 activities',goal:5,xp:100,count:function(c){return c.week.length;}},
+    {id:'variety',title:'Use 3 different categories',goal:3,xp:80,count:function(c){return c.distinctCats;}},
+    {id:'days',title:'Be active on 3 different days',goal:3,xp:80,count:function(c){return c.distinctDays;}},
+    {id:'plan',title:'Complete a planned activity',goal:1,xp:60,count:function(c){return c.planDone;}},
+    {id:'new',title:'Try something new',goal:1,xp:70,count:function(c){return c.newCount;}},
+    {id:'morning',title:'Finish one before noon',goal:1,xp:50,count:function(c){return c.morning;}},
+    {id:'far',title:'Do something 10+ mi away',goal:1,xp:60,count:function(c){return c.far;}},
+    {id:'cat',make:function(rnd){ var c=CATS[Math.floor(rnd()*CATS.length)]; return {id:'cat',title:'Do a '+c.label+' activity',goal:1,xp:50,count:function(ctx){return ctx.catCounts[c.id]||0;}}; }}
+  ];
+  var QUEST_XP={three:60,five:100,variety:80,days:80,plan:60,new:70,morning:50,far:60,cat:50};
+  function questXpForKey(k){ return QUEST_XP[k.split(':')[1]]||0; }
+  function weeklyQuests(ws){
+    var rnd=seededRand('whimsy'+isoOf(ws)); var pool=QUEST_POOL.slice();
+    for(var i=pool.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=pool[i];pool[i]=pool[j];pool[j]=t; }
+    return pool.slice(0,3).map(function(t){ return t.make?t.make(rnd):t; });
+  }
+  function questCtx(ws){
+    var we=new Date(ws); we.setDate(we.getDate()+7);
+    var week=log.filter(function(e){ var d=parseDT(e.at); return d&&d>=ws&&d<we; });
+    var cats={},days={},catCounts={},morning=0,far=0,planDone=0;
+    var before={}; log.forEach(function(e){ var d=parseDT(e.at); if(d&&d<ws) before[e.activityId]=1; });
+    var newSet={};
+    week.forEach(function(e){ var d=parseDT(e.at); var a=find(e.activityId); var cid=(a?a.category:e.category)||'other';
+      catCounts[cid]=(catCounts[cid]||0)+1; cats[cid]=1; days[(e.at||'').slice(0,10)]=1;
+      if(d&&hasTime(e.at)&&d.getHours()<12) morning++;
+      if(a&&hasDist(a)&&Number(a.dist)>=10) far++;
+      if(e.fromPlan) planDone++;
+      if(!before[e.activityId]) newSet[e.activityId]=1;
+    });
+    return {week:week,distinctCats:Object.keys(cats).length,distinctDays:Object.keys(days).length,catCounts:catCounts,morning:morning,far:far,planDone:planDone,newCount:Object.keys(newSet).length};
+  }
+
+  function sortedLog(){ return log.filter(function(e){return parseDT(e.at);}).sort(function(a,b){return parseDT(a.at)-parseDT(b.at);}); }
+  function aNth(n){ return function(s){ return s.length>=n?s[n-1].at:null; }; }
+  function aDistinct(field,k){ return function(s){ var set={},c=0; for(var i=0;i<s.length;i++){ var e=s[i]; var v; if(field==='cat'){ var a=find(e.activityId); v=(a?a.category:e.category)||'other'; } else { var a2=find(e.activityId); v=a2&&a2.location?a2.location.toLowerCase().trim():''; } if(!v) continue; if(!set[v]){ set[v]=1; if(++c>=k) return e.at; } } return null; }; }
+  function aHour(cmp,h){ return function(s){ for(var i=0;i<s.length;i++){ if(!hasTime(s[i].at)) continue; var hr=parseDT(s[i].at).getHours(); if(cmp==='<'?hr<h:hr>=h) return s[i].at; } return null; }; }
+  function aStreak(L){ return function(s){ var days={}; s.forEach(function(e){ days[(e.at||'').slice(0,10)]=1; }); var keys=Object.keys(days).sort();
+    for(var i=0;i<keys.length;i++){ var ok=true,end=parseDT(keys[i]); for(var j=1;j<L;j++){ var p=new Date(end); p.setDate(p.getDate()-j); if(!days[isoOf(p)]){ ok=false; break; } } if(ok) return keys[i]+'T12:00'; } return null; }; }
+  function aWeekend(){ return function(s){ var days={}; s.forEach(function(e){ days[(e.at||'').slice(0,10)]=1; }); var keys=Object.keys(days).sort();
+    for(var i=0;i<keys.length;i++){ var d=parseDT(keys[i]); if(d.getDay()===6){ var sun=new Date(d); sun.setDate(sun.getDate()+1); if(days[isoOf(sun)]) return isoOf(sun)+'T12:00'; } } return null; }; }
+  function aFlagNth(n){ return function(s){ var c=0; for(var i=0;i<s.length;i++){ if(s[i].fromPlan){ if(++c>=n) return s[i].at; } } return null; }; }
+  function aCostFreeNth(n){ return function(s){ var c=0; for(var i=0;i<s.length;i++){ var a=find(s[i].activityId); if(a&&(a.cost||0)===0){ if(++c>=n) return s[i].at; } } return null; }; }
+  function aFarNth(mi,n){ return function(s){ var c=0; for(var i=0;i<s.length;i++){ var a=find(s[i].activityId); if(a&&hasDist(a)&&Number(a.dist)>=mi){ if(++c>=n) return s[i].at; } } return null; }; }
+  function aQuestNth(n){ return function(){ var v=Object.keys(game.questDone).map(function(k){return game.questDone[k];}).sort(); return v.length>=n?v[n-1]:null; }; }
+
+  var ACH=[
+    {id:'first',name:'First Steps',desc:'Complete your first activity',xp:25,icon:'🌱',ck:aNth(1)},
+    {id:'ten',name:'Getting Going',desc:'10 completions',xp:50,icon:'🔥',ck:aNth(10)},
+    {id:'fifty',name:'Devoted',desc:'50 completions',xp:120,icon:'⭐',ck:aNth(50)},
+    {id:'hundred',name:'Centurion',desc:'100 completions',xp:250,icon:'🏆',ck:aNth(100)},
+    {id:'cats5',name:'Sampler',desc:'5 different categories',xp:60,icon:'🎨',ck:aDistinct('cat',5)},
+    {id:'catsall',name:'Completionist',desc:'Every category',xp:150,icon:'🧭',ck:aDistinct('cat',CATS.length)},
+    {id:'streak3',name:'On a Roll',desc:'3-day streak',xp:50,icon:'📿',ck:aStreak(3)},
+    {id:'streak7',name:'Unstoppable',desc:'7-day streak',xp:120,icon:'⚡',ck:aStreak(7)},
+    {id:'early',name:'Early Bird',desc:'Finish before 8 AM',xp:40,icon:'🌅',ck:aHour('<',8)},
+    {id:'night',name:'Night Owl',desc:'Finish after 9 PM',xp:40,icon:'🦉',ck:aHour('>=',21)},
+    {id:'weekend',name:'Weekend Warrior',desc:'Both days of one weekend',xp:60,icon:'🎉',ck:aWeekend()},
+    {id:'planner',name:'Planner',desc:'Complete 5 planned activities',xp:80,icon:'📅',ck:aFlagNth(5)},
+    {id:'thrifty',name:'Free Spirit',desc:'10 free activities',xp:60,icon:'🪙',ck:aCostFreeNth(10)},
+    {id:'far',name:'Far Afield',desc:'Something 25+ mi away',xp:50,icon:'🗺️',ck:aFarNth(25,1)},
+    {id:'places5',name:'Globetrotter',desc:'5 different places',xp:70,icon:'📍',ck:aDistinct('loc',5)},
+    {id:'quests5',name:'Quester',desc:'Finish 5 weekly quests',xp:80,icon:'🎯',ck:aQuestNth(5)},
+    {id:'quests25',name:'Quest Master',desc:'Finish 25 weekly quests',xp:200,icon:'👑',ck:aQuestNth(25)}
+  ];
+  var ACH_BY_ID={}; ACH.forEach(function(a){ ACH_BY_ID[a.id]=a; });
+
+  function evaluateProgress(silent){
+    var changed=false;
+    var ws=weekStartOf(new Date()); var wk=isoOf(ws); var ctx=questCtx(ws);
+    weeklyQuests(ws).forEach(function(q){ var key=wk+':'+q.id; if(!game.questDone[key] && q.count(ctx)>=q.goal){ game.questDone[key]=nowLocalDT(); changed=true; if(!silent) toast('Quest complete · '+q.title+' · +'+q.xp+' XP'); } });
+    var s=sortedLog();
+    ACH.forEach(function(a){ if(game.unlockedAch[a.id]) return; var at=a.ck(s); if(at){ game.unlockedAch[a.id]=at; changed=true; if(!silent) toast('Achievement · '+a.name+' · +'+a.xp+' XP'); } });
+    if(changed){ saveGame(); if(curView==='quest') renderQuest(); }
+  }
+  function seasonXp(){
+    var s=seasonOf(new Date()); var xp=0;
+    log.forEach(function(e){ if(inRange(e.at,s.start,s.end)) xp+=XP_DONE; });
+    Object.keys(game.questDone).forEach(function(k){ if(inRange(game.questDone[k],s.start,s.end)) xp+=questXpForKey(k); });
+    Object.keys(game.unlockedAch).forEach(function(id){ if(inRange(game.unlockedAch[id],s.start,s.end)){ var a=ACH_BY_ID[id]; if(a) xp+=a.xp; } });
+    return {xp:xp,season:s};
+  }
+  function progBar(pct){ return '<div class="pbar"><span style="width:'+Math.max(0,Math.min(100,pct))+'%"></span></div>'; }
+  function renderQuest(){
+    evaluateProgress(true);
+    var sx=seasonXp(), info=rankFor(sx.xp), s=sx.season;
+    var daysLeft=Math.max(0,Math.ceil((s.end-todayMid())/86400000));
+    var pct, nextTxt;
+    if(info.next){ pct=Math.round((sx.xp-info.rank.xp)/(info.next.xp-info.rank.xp)*100); nextTxt=(info.next.xp-sx.xp)+' XP to '+info.next.name; }
+    else { pct=100; nextTxt='Top rank reached'; }
+    var html='<div class="season-card">'
+      +'<div class="season-top"><div><div class="season-label">'+esc(s.label)+' Season</div><div class="season-rank">'+esc(info.rank.name)+'</div></div>'
+      +'<div class="season-xp"><div class="big">'+sx.xp+'</div><div class="sub">season XP</div></div></div>'
+      +progBar(pct)
+      +'<div class="season-foot"><span>'+esc(nextTxt)+'</span><span>'+daysLeft+(daysLeft===1?' day left':' days left')+'</span></div></div>';
+
+    var ws=weekStartOf(new Date()), we=new Date(ws); we.setDate(we.getDate()+7);
+    var qDays=Math.max(0,Math.ceil((we-todayMid())/86400000));
+    var ctx=questCtx(ws), wk=isoOf(ws);
+    html+='<div class="q-head"><h3>Weekly quests</h3><span>resets in '+qDays+(qDays===1?' day':' days')+'</span></div>';
+    weeklyQuests(ws).forEach(function(q){ var n=q.count(ctx), done=!!game.questDone[wk+':'+q.id]||n>=q.goal;
+      var p=Math.round(Math.min(1,n/q.goal)*100);
+      html+='<div class="q-card'+(done?' done':'')+'"><div class="q-row"><div class="q-title">'+(done?'✓ ':'')+esc(q.title)+'</div><div class="q-xp">+'+q.xp+'</div></div>'
+        +progBar(done?100:p)+'<div class="q-prog">'+Math.min(n,q.goal)+' / '+q.goal+'</div></div>';
+    });
+
+    var sLog=sortedLog(), unlocked=0;
+    var arows='';
+    ACH.forEach(function(a){ var at=game.unlockedAch[a.id]; var on=!!at; if(on) unlocked++;
+      var when=at?fmtWhen(at):'';
+      arows+='<div class="a-row'+(on?' on':'')+'"><div class="a-ico">'+a.icon+'</div><div class="a-body"><div class="a-name">'+esc(a.name)+(on?' <span class="a-xp">+'+a.xp+'</span>':'')+'</div><div class="a-desc">'+esc(a.desc)+(on&&when?(' · '+esc(when)):'')+'</div></div>'+(on?'<div class="a-check">✓</div>':'<div class="a-lock">🔒</div>')+'</div>';
+    });
+    html+='<div class="q-head"><h3>Achievements</h3><span>'+unlocked+' / '+ACH.length+'</span></div>'+arows;
+
+    $('questBody').innerHTML=html;
+  }
+
+  /* ---------- SHARE ---------- */
+  function shareTextFor(picks){
+    var multi=picks.length>1, lines=[];
+    lines.push(multi?('🎲 '+picks.length+' Whimsy picks for you:'):'🎲 A Whimsy pick for you:');
+    picks.forEach(function(a,i){
+      lines.push('');
+      lines.push((multi?(i+1)+'. ':'')+a.name);
+      var cat=CATMAP[a.category]||CATMAP.other, meta=[cat.label];
+      if(a.rating) meta.push(starStr(a.rating));
+      if(a.location) meta.push('📍 '+a.location);
+      if(hasDist(a)) meta.push(fmtDist(a.dist)+' away');
+      if(a.date) meta.push('📅 '+fmtDate(a.date));
+      meta.push(a.cost?COSTS[a.cost]:'Free');
+      if(a.duration) meta.push('⏱ '+DURMAP[a.duration].label);
+      if(a.meals&&a.meals.length) meta.push('🍴 '+mealsText(a));
+      lines.push(meta.join('  ·  '));
+      if(a.notes) lines.push(a.notes);
+      if(a.address) lines.push('📫 '+a.address+'\n🗺 '+mapUrl(a.address));
+      if(a.website) lines.push('🔗 '+normUrl(a.website));
+      var iu=igUrl(a.instagram); if(iu) lines.push('📸 '+iu);
+    });
+    lines.push(''); lines.push('— shared from Whimsy');
+    return lines.join('\n');
+  }
+  function sharePreviewHTML(picks){
+    return picks.map(function(a){
+      var cat=CATMAP[a.category]||CATMAP.other, meta=[];
+      if(a.rating) meta.push(starStr(a.rating));
+      if(a.location) meta.push(esc(a.location));
+      if(hasDist(a)) meta.push(esc(fmtDist(a.dist)));
+      if(a.date) meta.push(esc(fmtDate(a.date)));
+      meta.push(a.cost?COSTS[a.cost]:'Free');
+      if(a.duration) meta.push(esc(DURMAP[a.duration].label));
+      if(a.meals&&a.meals.length) meta.push(esc(mealsText(a)));
+      var links='';
+      var mu=mapUrl(a.address); if(mu) links+='<a href="'+esc(mu)+'" target="_blank" rel="noopener noreferrer">'+mapSvg()+'Map</a>';
+      if(a.website) links+='<a href="'+esc(normUrl(a.website))+'" target="_blank" rel="noopener noreferrer">'+webSvg()+'Website</a>';
+      var iu=igUrl(a.instagram); if(iu) links+='<a href="'+esc(iu)+'" target="_blank" rel="noopener noreferrer">'+igSvg()+'@'+esc(igHandle(a.instagram))+'</a>';
+      return '<div class="sp-card"><span class="sp-bar" style="background:'+cat.color+'"></span><div class="sp-body"><div class="sp-name">'+esc(a.name)+'</div><div class="sp-meta">'+meta.join(' · ')+'</div>'+(a.notes?'<div class="sp-note">'+esc(a.notes)+'</div>':'')+(links?'<div class="sp-links">'+links+'</div>':'')+'</div></div>';
+    }).join('');
+  }
+  function openShare(picks){
+    if(!picks||!picks.length) return;
+    $('shareTitle').textContent=picks.length>1?('Share '+picks.length+' picks'):'Share pick';
+    $('sharePreview').innerHTML=sharePreviewHTML(picks);
+    $('shareText').value=shareTextFor(picks);
+    var canNative=!!(navigator.share);
+    $('nativeShare').style.display=canNative?'inline-flex':'none';
+    $('copyShare').textContent=canNative?'Copy':'Copy message';
+    openScrim('shareScrim');
+  }
+  function doNativeShare(){
+    var text=$('shareText').value;
+    if(navigator.share){ navigator.share({title:'Whimsy',text:text}).then(function(){ closeScrim('shareScrim'); },function(){}); }
+    else copyShareText();
+  }
+  function copyShareText(){
+    var text=$('shareText').value;
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast('Copied — paste to your friend'); },fallbackCopy); }
+    else fallbackCopy();
+  }
+  function fallbackCopy(){
+    var ta=$('shareText'); ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+    var ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+    toast(ok?'Copied — paste to your friend':'Select the text, then copy');
+  }
+
+  /* ---------- CLOUD SYNC (Firebase) ---------- */
+  function parseFbConfig(text){
+    if(!text) return null;
+    var m=String(text).match(/\{[\s\S]*\}/); if(!m) return null;
+    var body=m[0].replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g,'$1"$2":').replace(/'/g,'"').replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
+    try{ var o=JSON.parse(body); return (o&&o.apiKey&&o.projectId)?o:null; }catch(e){ return null; }
+  }
+  function loadSyncedUids(){ try{ var s=localStorage.getItem(FBSYNC_KEY); var a=s?JSON.parse(s):[]; return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function markSynced(uid){ var a=loadSyncedUids(); if(a.indexOf(uid)<0){ a.push(uid); try{ localStorage.setItem(FBSYNC_KEY,JSON.stringify(a)); }catch(e){} } }
+  function cloudMarkDirty(){ if(suppressPush||!CS.user||!CS.db) return; clearTimeout(CS.pushT); CS.pushT=setTimeout(cloudPush,700); }
+  function saveAllLocal(){ save(); savePlans(); saveLog(); saveGame(); savePrefs(); }
+  function rerenderAll(){ showPlaceholder('Tap Roll to draw something to do'); renderList(); updateMatchLine(); evaluateProgress(true); if(curView==='plan') renderPlans(); if(curView==='cal') renderCalendar(); if(curView==='log') renderLog(); if(curView==='quest') renderQuest(); }
+  function unionById(localA,cloudA){ if(!Array.isArray(cloudA)) return localA; var seen={},out=localA.slice(); localA.forEach(function(x){ if(x&&x.id) seen[x.id]=1; }); cloudA.forEach(function(x){ if(x&&x.id&&!seen[x.id]){ out.push(x); seen[x.id]=1; } }); return out; }
+  function unionInto(cloud){
+    activities=unionById(activities,cloud.activities); plans=unionById(plans,cloud.plans); log=unionById(log,cloud.log);
+    if(cloud.game){ var ua=cloud.game.unlockedAch||{}, qd=cloud.game.questDone||{}; for(var k in ua) if(!game.unlockedAch[k]) game.unlockedAch[k]=ua[k]; for(var q in qd) if(!game.questDone[q]) game.questDone[q]=qd[q]; }
+  }
+  function applyCloud(d){
+    suppressPush=true;
+    if(Array.isArray(d.activities)) activities=d.activities;
+    if(Array.isArray(d.plans)) plans=d.plans;
+    if(Array.isArray(d.log)) log=d.log;
+    if(d.game){ game.unlockedAch=d.game.unlockedAch||{}; game.questDone=d.game.questDone||{}; }
+    if(d.prefs&&typeof d.prefs.sound==='boolean') prefs.sound=d.prefs.sound;
+    saveAllLocal(); suppressPush=false; rerenderAll();
+  }
+  function cloudBlob(){ return {activities:activities,plans:plans,log:log,game:game,prefs:prefs,updatedAt:Date.now(),token:(CS.user.uid+'.'+Math.random().toString(36).slice(2))}; }
+  function cloudPush(){
+    if(!CS.user||!CS.db) return;
+    var data=cloudBlob(); CS.lastPush=data.token; setSyncBadge('Saving…');
+    CS._fs.setDoc(CS._fs.doc(CS.db,'whimsy',CS.user.uid),data).then(function(){ CS.lastAppliedAt=data.updatedAt; setSyncBadge('Synced'); },function(){ setSyncBadge('Sync error'); });
+  }
+  async function ensureSDK(){
+    if(CS.db) return true;
+    if(!CS.cfg) return false;
+    try{
+      var appM=await import(FB_VER+'firebase-app.js');
+      var authM=await import(FB_VER+'firebase-auth.js');
+      var fsM=await import(FB_VER+'firebase-firestore.js');
+      CS.app=appM.initializeApp(CS.cfg); CS._auth=authM; CS._fs=fsM;
+      CS.auth=authM.getAuth(CS.app); CS.db=fsM.getFirestore(CS.app);
+      authM.onAuthStateChanged(CS.auth,onCloudUser);
+      return true;
+    }catch(e){ CS.err=e; return false; }
+  }
+  async function connectUser(uid){
+    var ref=CS._fs.doc(CS.db,'whimsy',uid), snap;
+    try{ snap=await CS._fs.getDoc(ref); }catch(e){ setSyncBadge('Sync error'); return; }
+    var firstHere=loadSyncedUids().indexOf(uid)<0;
+    if(snap.exists()){
+      var cloud=snap.data();
+      if(firstHere){ unionInto(cloud); markSynced(uid); rerenderAll(); cloudPush(); }
+      else { applyCloud(cloud); CS.lastAppliedAt=cloud.updatedAt||Date.now(); }
+    } else { markSynced(uid); cloudPush(); }
+    if(CS.unsub){ CS.unsub(); CS.unsub=null; }
+    CS.unsub=CS._fs.onSnapshot(ref,function(s){ if(!s.exists()) return; var d=s.data(); if(d.token===CS.lastPush) return; if((d.updatedAt||0)>(CS.lastAppliedAt||0)){ applyCloud(d); CS.lastAppliedAt=d.updatedAt||Date.now(); setSyncBadge('Synced'); } });
+  }
+  function onCloudUser(u){
+    CS.user=u||null;
+    if(u){ setSyncBadge('Connecting…'); connectUser(u.uid); }
+    else { if(CS.unsub){ CS.unsub(); CS.unsub=null; } setSyncBadge(''); }
+    renderSyncUI();
+  }
+  async function fbSignInGoogle(){
+    if(!await ensureSDK()){ toast(CS.cfg?'Sync needs the hosted version online':'Connect your Firebase config first'); return; }
+    try{ var p=new CS._auth.GoogleAuthProvider(); await CS._auth.signInWithPopup(CS.auth,p); }catch(e){ toast('Google sign-in failed'); }
+  }
+  async function fbSignInEmail(create){
+    var email=($('fbEmail').value||'').trim(), pw=$('fbPw').value||'';
+    if(!email||!pw){ toast('Enter email and password'); return; }
+    if(!await ensureSDK()){ toast('Connect your Firebase config first'); return; }
+    try{ if(create) await CS._auth.createUserWithEmailAndPassword(CS.auth,email,pw); else await CS._auth.signInWithEmailAndPassword(CS.auth,email,pw); }
+    catch(e){ toast(e&&e.code?e.code.replace('auth/','').replace(/-/g,' '):'Sign-in failed'); }
+  }
+  async function fbSignOut(){ if(CS.auth){ try{ await CS._auth.signOut(CS.auth); }catch(e){} } }
+  function fbDisconnect(){ fbSignOut(); CS.cfg=null; CS.user=null; if(CS.unsub){ CS.unsub(); CS.unsub=null; } Store.set(FBCFG_KEY,''); renderSyncUI(); toast('Disconnected — reload to fully reset'); }
+  function saveFbConfig(){
+    var cfg=parseFbConfig($('fbConfig').value);
+    if(!cfg){ $('fbCfgErr').classList.add('show'); return; }
+    CS.cfg=cfg; Store.set(FBCFG_KEY,JSON.stringify(cfg)); $('fbCfgErr').classList.remove('show');
+    closeScrim('fbScrim'); renderSyncUI(); ensureSDK(); toast('Firebase connected — now sign in');
+  }
+  function setSyncBadge(t){ var b=$('syncBadge'); if(b){ b.textContent=t||''; b.className='sync-badge'+(t==='Synced'?' ok':(t==='Sync error'?' err':'')); } }
+  function renderSyncUI(){
+    var c=$('syncControls'), d=$('syncDesc'); if(!c) return;
+    if(!CS.cfg){
+      d.textContent='Connect Firebase to sync across devices';
+      c.innerHTML='<button class="set-btn" id="fbConnectBtn">Connect Firebase</button>';
+      $('fbConnectBtn').addEventListener('click',function(){ $('fbConfig').value=''; $('fbCfgErr').classList.remove('show'); openScrim('fbScrim'); });
+    } else if(CS.user){
+      d.textContent='Signed in as '+(CS.user.email||CS.user.uid);
+      c.innerHTML='<div style="display:flex;gap:9px"><button class="set-btn" id="fbSignOutBtn">Sign out</button><button class="set-btn" id="fbDiscBtn" style="color:var(--danger);border-color:rgba(232,116,138,.4)">Disconnect</button></div>';
+      $('fbSignOutBtn').addEventListener('click',fbSignOut); $('fbDiscBtn').addEventListener('click',fbDisconnect);
+    } else {
+      d.textContent='Firebase connected — sign in to sync';
+      c.innerHTML='<button class="set-btn" id="fbGoogleBtn" style="width:100%;margin-bottom:9px">Sign in with Google</button>'
+        +'<input class="text" id="fbEmail" type="email" placeholder="Email" autocomplete="username" style="margin-bottom:8px">'
+        +'<input class="text" id="fbPw" type="password" placeholder="Password" autocomplete="current-password" style="margin-bottom:9px">'
+        +'<div style="display:flex;gap:9px"><button class="set-btn" id="fbInBtn" style="flex:1">Sign in</button><button class="set-btn" id="fbUpBtn" style="flex:1">Create account</button></div>'
+        +'<button class="set-btn" id="fbDisc2" style="margin-top:9px;color:var(--danger);border-color:rgba(232,116,138,.4)">Disconnect Firebase</button>';
+      $('fbGoogleBtn').addEventListener('click',fbSignInGoogle);
+      $('fbInBtn').addEventListener('click',function(){ fbSignInEmail(false); });
+      $('fbUpBtn').addEventListener('click',function(){ fbSignInEmail(true); });
+      $('fbDisc2').addEventListener('click',fbDisconnect);
+    }
+  }
+
+  /* ---------- PICK (manual selection) ---------- */
+  var pickSel={};
+  function pkRowSub(a){
+    var sub='';
+    var cat=CATMAP[a.category]||CATMAP.other; sub+='<span>'+esc(cat.label)+'</span>';
+    if(a.rating) sub+='<span class="rt">'+starStr(a.rating)+'</span>';
+    if(a.location) sub+='<span>'+esc(a.location)+'</span>';
+    if(hasDist(a)) sub+='<span>'+esc(fmtDist(a.dist))+'</span>';
+    if(a.date) sub+='<span>'+esc(fmtDate(a.date))+'</span>';
+    sub+='<span>'+(a.cost?COSTS[a.cost]:'Free')+'</span>';
+    if(a.meals&&a.meals.length) sub+='<span>'+esc(mealsText(a))+'</span>';
+    return sub;
+  }
+  function pickMatches(){
+    var q=($('pkSearch').value||'').trim().toLowerCase();
+    return currentMatches().filter(function(a){ if(!q) return true; return ((a.name||'')+' '+(a.location||'')+' '+(a.notes||'')).toLowerCase().indexOf(q)>=0; });
+  }
+  function renderPickList(){
+    var wrap=$('pkList'); var items=pickMatches();
+    if(!activities.length){ wrap.innerHTML='<div class="pk-empty">No activities yet — add some first.</div>'; }
+    else if(!items.length){ wrap.innerHTML='<div class="pk-empty">Nothing matches. Loosen your constraints or clear the search.</div>'; }
+    else {
+      wrap.innerHTML=items.map(function(a){ var cat=CATMAP[a.category]||CATMAP.other; var on=!!pickSel[a.id];
+        return '<div class="pk-row'+(on?' on':'')+'" data-id="'+a.id+'"><span class="pk-check">'+(on?'✓':'')+'</span><span class="bar" style="background:'+cat.color+'"></span><div class="body"><div class="name">'+esc(a.name)+'</div><div class="sub">'+pkRowSub(a)+'</div></div></div>';
+      }).join('');
+      [].forEach.call(wrap.querySelectorAll('.pk-row'),function(r){ r.addEventListener('click',function(){ var id=r.getAttribute('data-id'); pickSel[id]=!pickSel[id]; if(!pickSel[id]) delete pickSel[id]; renderPickList(); }); });
+    }
+    var n=Object.keys(pickSel).length;
+    var sb=$('pkShare'); sb.disabled=(n===0); sb.textContent=n?('Share ('+n+')'):'Share';
+    var vis=items.length, allOn=vis>0 && items.every(function(a){return pickSel[a.id];});
+    $('pkAll').textContent=allOn?'Clear all':'Select all';
+  }
+  function openPickSheet(){
+    pickSel={}; $('pkSearch').value='';
+    var n=currentMatches().length, total=activities.length;
+    $('pkNote').textContent = total? (n+' of '+total+' match your roll constraints') : 'No activities yet';
+    renderPickList(); openScrim('pickScrim');
+  }
+  function pickToggleAll(){
+    var items=pickMatches(); var allOn=items.length>0 && items.every(function(a){return pickSel[a.id];});
+    if(allOn){ items.forEach(function(a){ delete pickSel[a.id]; }); }
+    else { items.forEach(function(a){ pickSel[a.id]=true; }); }
+    renderPickList();
+  }
+  function sharePicked(){
+    var ids=pickSel; var chosen=currentMatches().filter(function(a){return ids[a.id];});
+    if(!chosen.length){ chosen=activities.filter(function(a){return ids[a.id];}); }
+    if(!chosen.length) return;
+    closeScrim('pickScrim'); openShare(chosen);
+  }
+
+  function exportData(){
+    var payload={app:'whim',version:3,exported:new Date().toISOString(),activities:activities,plans:plans,log:log,game:game};
+    var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob); var a=document.createElement('a');
+    a.href=url; a.download='whimsy-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(url);},1000); toast('Backup downloaded');
+  }
+  function importData(file){
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var obj=JSON.parse(r.result); var arr=Array.isArray(obj)?obj:obj.activities; if(!Array.isArray(arr)) throw new Error('bad');
+        var idMap={}, added=0;
+        arr.forEach(function(a){
+          if(!a||!a.name) return;
+          var nid=uid(); if(a.id) idMap[a.id]=nid;
+          var dist=''; if(a.dist!=null&&a.dist!==''){ var dn=Number(a.dist); if(isFinite(dn)&&dn>=0) dist=dn; }
+          activities.push({id:nid,createdAt:a.createdAt||Date.now()+Math.random(),name:String(a.name),location:a.location||'',address:a.address||'',dist:dist,date:a.date||'',category:CATMAP[a.category]?a.category:'other',cost:Math.max(0,Math.min(3,a.cost|0)),duration:DURMAP[a.duration]?a.duration:'',notes:a.notes||'',website:a.website||'',instagram:a.instagram||'',meals:Array.isArray(a.meals)?a.meals.filter(function(x){return ['breakfast','lunch','dinner'].indexOf(x)>=0;}):[],rating:Math.max(0,Math.min(5,a.rating|0))});
+          added++;
+          // legacy doneCount -> log entries
+          var dcount=a.doneCount|0; if(dcount>0){ var at=(a.lastDone||'').slice(0,10)||nowLocalDT(); for(var i=0;i<dcount;i++) log.push({id:uid(),activityId:nid,name:String(a.name),category:CATMAP[a.category]?a.category:'other',at:at,note:''}); }
+        });
+        if(Array.isArray(obj.plans)) obj.plans.forEach(function(p){ if(!p||!p.at) return; var aid=idMap[p.activityId]||p.activityId; plans.push({id:uid(),activityId:aid,name:p.name||'',category:p.category||'',at:p.at,note:p.note||'',createdAt:p.createdAt||Date.now(),done:!!p.done}); });
+        if(Array.isArray(obj.log)) obj.log.forEach(function(e){ if(!e||!e.at) return; var aid=idMap[e.activityId]||e.activityId; log.push({id:uid(),activityId:aid,name:e.name||'',category:e.category||'other',at:e.at,note:e.note||'',fromPlan:!!e.fromPlan}); });
+        if(obj.game){ if(obj.game.unlockedAch) for(var ua in obj.game.unlockedAch){ if(!game.unlockedAch[ua]) game.unlockedAch[ua]=obj.game.unlockedAch[ua]; } if(obj.game.questDone) for(var qd in obj.game.questDone){ if(!game.questDone[qd]) game.questDone[qd]=obj.game.questDone[qd]; } }
+        save(); savePlans(); saveLog(); saveGame(); evaluateProgress(true); renderList(); updateMatchLine();
+        if(curView==='plan') renderPlans(); if(curView==='log') renderLog(); if(curView==='cal') renderCalendar(); if(curView==='quest') renderQuest();
+        toast('Imported '+added);
+      }catch(e){ toast('Could not read that file'); }
+    };
+    r.readAsText(file);
+  }
+
+  function bind(){
+    [].forEach.call(document.querySelectorAll('.nav button'),function(b){ b.addEventListener('click',function(){ setView(b.getAttribute('data-view')); }); });
+    $('rollBtn').addEventListener('click',function(){ audio(); roll(); });
+    $('shareBtn').addEventListener('click',function(){ if(lastPicked&&lastPicked.length) openShare(lastPicked); });
+    $('pickBtn').addEventListener('click',openPickSheet);
+    $('pkSearch').addEventListener('input',renderPickList);
+    $('pkAll').addEventListener('click',pickToggleAll);
+    $('pkShare').addEventListener('click',sharePicked);
+    $('pkCancel').addEventListener('click',function(){ closeScrim('pickScrim'); });
+    $('pickScrim').addEventListener('click',function(e){ if(e.target===$('pickScrim')) closeScrim('pickScrim'); });
+    $('nativeShare').addEventListener('click',doNativeShare);
+    $('copyShare').addEventListener('click',copyShareText);
+    $('shareScrim').addEventListener('click',function(e){ if(e.target===$('shareScrim')) closeScrim('shareScrim'); });
+    $('cHead').addEventListener('click',function(){ $('constraints').classList.toggle('collapsed'); });
+    $('fLoc').addEventListener('input',function(){ filters.loc=$('fLoc').value.trim(); updateMatchLine(); });
+    [].forEach.call(document.querySelectorAll('[data-reset]'),function(el){
+      el.addEventListener('click',function(e){ e.stopPropagation(); var t=el.getAttribute('data-reset');
+        if(t==='cats'){ filters.cats=[]; [].forEach.call($('fCats').children,function(x){x.classList.remove('on','amber');}); }
+        if(t==='loc'){ filters.loc=''; $('fLoc').value=''; } updateMatchLine(); });
+    });
+    $('fab').addEventListener('click',function(){ if(curView==='plan') openPlan(null,null); else openEdit(null); });
+    $('searchInput').addEventListener('input',renderList);
+    $('sortSel').addEventListener('change',renderList);
+    $('saveEdit').addEventListener('click',saveEdit);
+    $('cancelEdit').addEventListener('click',function(){ closeScrim('editScrim'); });
+    $('deleteAct').addEventListener('click',deleteAct);
+    $('clearDate').addEventListener('click',function(){ $('fDate').value=''; });
+    $('donePlus').addEventListener('click',function(){ draft.done++; renderDone(); });
+    $('doneMinus').addEventListener('click',function(){ if(draft.done>0){ draft.done--; renderDone(); } });
+    $('editScrim').addEventListener('click',function(e){ if(e.target===$('editScrim')) closeScrim('editScrim'); });
+    $('savePlan').addEventListener('click',savePlan);
+    $('cancelPlan').addEventListener('click',function(){ closeScrim('planScrim'); });
+    $('deletePlan').addEventListener('click',deletePlan);
+    $('planScrim').addEventListener('click',function(e){ if(e.target===$('planScrim')) closeScrim('planScrim'); });
+    $('calPrev').addEventListener('click',function(){ calM--; if(calM<0){ calM=11; calY--; } renderCalendar(); });
+    $('calNext').addEventListener('click',function(){ calM++; if(calM>11){ calM=0; calY++; } renderCalendar(); });
+    $('calToday').addEventListener('click',function(){ var n=new Date(); calY=n.getFullYear(); calM=n.getMonth(); calSel=isoOf(n); renderCalendar(); });
+    $('saveLogBtn').addEventListener('click',saveLogEntry);
+    $('cancelLog').addEventListener('click',function(){ closeScrim('logScrim'); });
+    $('deleteLogBtn').addEventListener('click',deleteLogSheet);
+    $('logScrim').addEventListener('click',function(e){ if(e.target===$('logScrim')) closeScrim('logScrim'); });
+    $('settingsBtn').addEventListener('click',function(){ syncSoundSwitch(); renderSyncUI(); openScrim('setScrim'); });
+    $('fbCfgSave').addEventListener('click',saveFbConfig);
+    $('fbCfgCancel').addEventListener('click',function(){ closeScrim('fbScrim'); });
+    $('fbScrim').addEventListener('click',function(e){ if(e.target===$('fbScrim')) closeScrim('fbScrim'); });
+    $('closeSet').addEventListener('click',function(){ closeScrim('setScrim'); });
+    $('setScrim').addEventListener('click',function(e){ if(e.target===$('setScrim')) closeScrim('setScrim'); });
+    $('soundSwitch').addEventListener('click',function(){ prefs.sound=!prefs.sound; savePrefs(); syncSoundSwitch(); if(prefs.sound){ audio(); chime(); } });
+    $('exportBtn').addEventListener('click',exportData);
+    $('importBtn').addEventListener('click',function(){ $('importFile').click(); });
+    $('importFile').addEventListener('change',function(){ if(this.files&&this.files[0]) importData(this.files[0]); this.value=''; });
+    $('clearBtn').addEventListener('click',function(){
+      var btn=$('clearBtn');
+      if(btn.dataset.armed){ activities=[]; plans=[]; log=[]; game={unlockedAch:{},questDone:{}}; lastPicked=null; showPlaceholder('Tap Roll to draw something to do'); save(); savePlans(); saveLog(); saveGame(); renderList(); updateMatchLine(); if(curView==='cal') renderCalendar(); if(curView==='quest') renderQuest(); closeScrim('setScrim'); toast('Cleared'); delete btn.dataset.armed; btn.textContent='Clear all'; }
+      else { btn.dataset.armed='1'; btn.textContent='Tap again to confirm'; setTimeout(function(){ if(btn){ delete btn.dataset.armed; btn.textContent='Clear all'; } },3000); }
+    });
+  }
+  function syncSoundSwitch(){ $('soundSwitch').classList.toggle('on',!!prefs.sound); }
+
+  async function init(){
+    buildPickers(); buildFilters(); buildPickCtrl(); buildLogGroupCtrl(); bind();
+    try{ var raw=await Store.get(DATA_KEY); if(raw){ var arr=JSON.parse(raw); if(Array.isArray(arr)) activities=arr; } }catch(e){}
+    try{ var pr=await Store.get(PREF_KEY); if(pr){ var p=JSON.parse(pr); if(p&&typeof p.sound==='boolean') prefs.sound=p.sound; } }catch(e){}
+    try{ var rp=await Store.get(PLANS_KEY); if(rp){ var pa=JSON.parse(rp); if(Array.isArray(pa)) plans=pa; } }catch(e){}
+    try{ var rl=await Store.get(LOG_KEY); if(rl){ var la=JSON.parse(rl); if(Array.isArray(la)) log=la; } }catch(e){}
+    try{ var rg=await Store.get(GAME_KEY); if(rg){ var ga=JSON.parse(rg); if(ga&&typeof ga==='object'){ game.unlockedAch=ga.unlockedAch||{}; game.questDone=ga.questDone||{}; } } }catch(e){}
+    try{ var fc=await Store.get(FBCFG_KEY); if(fc){ var pc=JSON.parse(fc); if(pc&&pc.apiKey&&pc.projectId){ CS.cfg=pc; } } }catch(e){}
+    activities.forEach(function(a){
+      if(a.cost==null)a.cost=0; if(!a.createdAt)a.createdAt=Date.now(); if(a.dist==null)a.dist='';
+      if(!CATMAP[a.category]){ if(a.category==='home'&&!a.location) a.location='Home'; a.category='other'; }
+      if(a.doneCount){ var existing=logFor(a.id).length; for(var i=existing;i<a.doneCount;i++){ var at=(a.lastDone||'').slice(0,10)||nowLocalDT(); log.push({id:uid(),activityId:a.id,name:a.name,category:a.category,at:at,note:''}); } delete a.doneCount; delete a.lastDone; }
+    });
+    if(log.length) saveLog();
+    evaluateProgress(true);
+    showPlaceholder('Tap Roll to draw something to do');
+    renderList(); updateMatchLine();
+    if(CS.cfg){ ensureSDK(); }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
